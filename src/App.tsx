@@ -1,17 +1,24 @@
-import { AuthProvider } from './contexts/AuthContext';
-import { Header } from './components/Header';
-import { Footer } from './components/Footer';
-import { Router } from './Router';
+import { useEffect } from 'react';
+import { useAuthStore } from '@/stores/authStore';
+import Router from './Router';
+import { LoadingScreen } from '@/components/common/LoadingScreen';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 
 function App() {
+  const { checkAuth, isLoading } = useAuthStore();
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
   return (
-    <AuthProvider>
-      <div className="min-h-screen bg-white">
-        <Header />
-        <Router />
-        <Footer />
-      </div>
-    </AuthProvider>
+    <ErrorBoundary>
+      <Router />
+    </ErrorBoundary>
   );
 }
 

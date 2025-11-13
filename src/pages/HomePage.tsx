@@ -1,274 +1,362 @@
-import { HeroWithProducts } from '../components/HeroWithProducts';
-import { FeaturedProducts } from '../components/FeaturedProducts';
-import { Button } from '../components/Button';
-import { useScrollAnimation } from '../hooks/useScrollAnimation';
-import { TrustBar } from '../components/TrustBar';
-import { CategoryShowcase } from '../components/CategoryShowcase';
-import { Star, Users, Award, TrendingUp, Check } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useFeaturedProducts } from '@/hooks/useProducts';
+import { useCategories } from '@/hooks/useCategories';
+import { Spinner } from '@/components/common/Spinner';
+import { Button } from '@/components/common/Button';
+import { Card } from '@/components/common/Card';
+import { Badge } from '@/components/common/Badge';
+import HeroSection from '@/components/HeroSection';
+import TrustBar from '@/components/TrustBar';
+import FeaturedProducts from '@/components/FeaturedProducts';
+import CategoryShowcase from '@/components/CategoryShowcase';
+import { 
+  ShoppingBag, 
+  Truck, 
+  Shield, 
+  Headphones,
+  ArrowRight,
+  Star,
+  Users,
+  Award,
+  TrendingUp
+} from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
+import { useCart } from '@/hooks/useCart';
+import { useWishlist } from '@/hooks/useWishlist';
 
-export function HomePage() {
-  useScrollAnimation();
+export default function HomePage() {
+  const { data: products, isLoading: productsLoading } = useFeaturedProducts();
+  const { data: categories, isLoading: categoriesLoading } = useCategories();
+  const { addToCart } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
+
+  if (productsLoading || categoriesLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  const features = [
+    {
+      icon: Truck,
+      title: 'Free Shipping',
+      description: 'Free shipping on orders over ₹500',
+      color: 'text-blue-600',
+      bg: 'bg-blue-50',
+    },
+    {
+      icon: Shield,
+      title: 'Secure Payment',
+      description: '100% secure payment processing',
+      color: 'text-green-600',
+      bg: 'bg-green-50',
+    },
+    {
+      icon: Headphones,
+      title: '24/7 Support',
+      description: 'Dedicated customer support team',
+      color: 'text-purple-600',
+      bg: 'bg-purple-50',
+    },
+    {
+      icon: Award,
+      title: 'Quality Guarantee',
+      description: 'Premium quality products',
+      color: 'text-orange-600',
+      bg: 'bg-orange-50',
+    },
+  ];
+
+  const stats = [
+    { icon: Users, label: 'Happy Customers', value: '10,000+' },
+    { icon: ShoppingBag, label: 'Products Sold', value: '50,000+' },
+    { icon: Star, label: 'Average Rating', value: '4.8/5' },
+    { icon: TrendingUp, label: 'Growth Rate', value: '95%' },
+  ];
 
   return (
-    <div>
-      {/* Floating Orbit Hero */}
-      <HeroWithProducts />
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <HeroSection />
 
-      {/* Trust Indicators */}
+      {/* Trust Bar */}
       <TrustBar />
 
-      {/* Featured Products with Magnetic Hover */}
-      <FeaturedProducts />
+      {/* Features Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <Card key={index} className="p-6 text-center hover:shadow-lg transition-shadow">
+                <div className={`${feature.bg} w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4`}>
+                  <feature.icon className={`w-8 h-8 ${feature.color}`} />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-sm text-gray-600">{feature.description}</p>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
 
-      {/* Color-Coded Category Showcase */}
-      <CategoryShowcase />
+      {/* Featured Products Section */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                Featured Products
+              </h2>
+              <p className="text-gray-600">
+                Discover our handpicked selection of premium products
+              </p>
+            </div>
+            <Link to="/shop">
+              <Button variant="outline">
+                View All
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+          </div>
+
+          {products && products.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {products.slice(0, 8).map((product) => (
+                <Card key={product.id} hover className="overflow-hidden group">
+                  <Link to={`/product/${product.slug}`}>
+                    <div className="relative aspect-square bg-gray-100 overflow-hidden">
+                      {product.images && product.images[0] ? (
+                        <img
+                          src={product.images[0].image_url}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <ShoppingBag className="w-16 h-16 text-gray-300" />
+                        </div>
+                      )}
+                      {product.compare_price && product.compare_price > product.price && (
+                        <Badge
+                          variant="error"
+                          className="absolute top-3 right-3"
+                        >
+                          {Math.round(
+                            ((product.compare_price - product.price) /
+                              product.compare_price) *
+                              100
+                          )}
+                          % OFF
+                        </Badge>
+                      )}
+                      {product.is_featured && (
+                        <Badge
+                          variant="primary"
+                          className="absolute top-3 left-3"
+                        >
+                          Featured
+                        </Badge>
+                      )}
+                    </div>
+                  </Link>
+
+                  <div className="p-4">
+                    <Link to={`/product/${product.slug}`}>
+                      <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-primary-600 transition-colors">
+                        {product.name}
+                      </h3>
+                    </Link>
+
+                    {product.short_description && (
+                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                        {product.short_description}
+                      </p>
+                    )}
+
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="flex items-center">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-4 h-4 ${
+                              i < Math.round(product.average_rating || 0)
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-sm text-gray-600">
+                        ({product.review_count || 0})
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <span className="text-xl font-bold text-gray-900">
+                          {formatCurrency(product.price)}
+                        </span>
+                        {product.compare_price && (
+                          <span className="text-sm text-gray-500 line-through ml-2">
+                            {formatCurrency(product.compare_price)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => addToCart(product, 1)}
+                      >
+                        Add to Cart
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => toggleWishlist(product)}
+                      >
+                        <Star
+                          className={`w-4 h-4 ${
+                            isInWishlist(product.id)
+                              ? 'fill-red-500 text-red-500'
+                              : ''
+                          }`}
+                        />
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-600">No featured products available</p>
+              <Link to="/shop" className="mt-4 inline-block">
+                <Button>Browse All Products</Button>
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Categories Section */}
+      {categories && categories.length > 0 && (
+        <section className="py-16 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                Shop by Category
+              </h2>
+              <p className="text-gray-600">
+                Explore our wide range of product categories
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {categories.slice(0, 8).map((category) => (
+                <Link
+                  key={category.id}
+                  to={`/shop?category=${category.id}`}
+                >
+                  <Card hover className="p-6 text-center">
+                    <div className="w-20 h-20 bg-gradient-to-br from-primary-50 to-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      {category.image_url ? (
+                        <img
+                          src={category.image_url}
+                          alt={category.name}
+                          className="w-12 h-12 object-cover"
+                        />
+                      ) : (
+                        <ShoppingBag className="w-10 h-10 text-primary-600" />
+                      )}
+                    </div>
+                    <h3 className="font-semibold text-gray-900">
+                      {category.name}
+                    </h3>
+                    {category.description && (
+                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                        {category.description}
+                      </p>
+                    )}
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Stats Section */}
-      <section className="py-24 bg-white border-y-4 border-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center fade-in-observer">
-              <div className="text-5xl md:text-6xl font-black mb-3">50K+</div>
-              <p className="text-sm md:text-base font-bold text-gray-600 uppercase tracking-wide">Happy Customers</p>
-            </div>
-            <div className="text-center fade-in-observer">
-              <div className="text-5xl md:text-6xl font-black mb-3">98%</div>
-              <p className="text-sm md:text-base font-bold text-gray-600 uppercase tracking-wide">Satisfaction Rate</p>
-            </div>
-            <div className="text-center fade-in-observer">
-              <div className="text-5xl md:text-6xl font-black mb-3">100+</div>
-              <p className="text-sm md:text-base font-bold text-gray-600 uppercase tracking-wide">Products</p>
-            </div>
-            <div className="text-center fade-in-observer">
-              <div className="text-5xl md:text-6xl font-black mb-3">4.9★</div>
-              <p className="text-sm md:text-base font-bold text-gray-600 uppercase tracking-wide">Average Rating</p>
-            </div>
+      <section className="py-16 bg-gradient-to-br from-primary-600 to-primary-700 text-white">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center">
+                <stat.icon className="w-12 h-12 mx-auto mb-4 opacity-80" />
+                <div className="text-3xl font-bold mb-2">{stat.value}</div>
+                <div className="text-primary-100">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <section className="py-32 bg-gradient-to-b from-white to-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-5xl md:text-6xl font-black mb-16 text-center tracking-tight fade-in-observer">
-            HOW IT WORKS
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            <div className="text-center fade-in-observer">
-              <div className="w-20 h-20 bg-black text-white rounded-full flex items-center justify-center text-3xl font-black mx-auto mb-6 shadow-xl">1</div>
-              <h3 className="text-2xl font-black mb-4">TAKE ASSESSMENT</h3>
-              <p className="text-gray-600 leading-relaxed">Answer a few questions about your skin type, concerns, and goals. Our AI-powered quiz analyzes your responses.</p>
+      {/* Newsletter Section */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <Card className="p-12 bg-gradient-to-r from-primary-50 to-blue-50">
+            <div className="max-w-2xl mx-auto text-center">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Subscribe to Our Newsletter
+              </h2>
+              <p className="text-gray-600 mb-8">
+                Get the latest updates on new products and exclusive offers
+              </p>
+              <form className="flex gap-3 max-w-md mx-auto">
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+                <Button type="submit">Subscribe</Button>
+              </form>
             </div>
-            <div className="text-center fade-in-observer">
-              <div className="w-20 h-20 bg-black text-white rounded-full flex items-center justify-center text-3xl font-black mx-auto mb-6 shadow-xl">2</div>
-              <h3 className="text-2xl font-black mb-4">GET RECOMMENDATIONS</h3>
-              <p className="text-gray-600 leading-relaxed">Receive personalized product recommendations tailored to your unique skin profile and specific needs.</p>
-            </div>
-            <div className="text-center fade-in-observer">
-              <div className="w-20 h-20 bg-black text-white rounded-full flex items-center justify-center text-3xl font-black mx-auto mb-6 shadow-xl">3</div>
-              <h3 className="text-2xl font-black mb-4">SEE RESULTS</h3>
-              <p className="text-gray-600 leading-relaxed">Follow your customized routine and track visible improvements. Our science-backed formulas deliver real results.</p>
-            </div>
-          </div>
+          </Card>
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-32 bg-black text-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl animate-pulse-slow"></div>
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <h2 className="text-5xl md:text-6xl font-black mb-16 text-center tracking-tight fade-in-observer">
-            CUSTOMER STORIES
+      {/* CTA Section */}
+      <section className="py-16 bg-gray-900 text-white">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold mb-4">
+            Ready to Start Shopping?
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <TestimonialCard 
-              name="Priya Sharma"
-              rating={5}
-              text="The personalized assessment was spot-on! My skin has never looked better. The products are gentle yet effective."
-              delay={0.1}
-            />
-            <TestimonialCard 
-              name="Rahul Mehta"
-              rating={5}
-              text="Finally, skincare backed by real science. No more guessing what works. The results speak for themselves."
-              delay={0.3}
-            />
-            <TestimonialCard 
-              name="Ananya Desai"
-              rating={5}
-              text="I've tried countless brands, but this is different. The transparency and quality are unmatched. Highly recommend!"
-              delay={0.5}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Intelligent Skincare Section */}
-      <section className="py-32 bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white relative overflow-hidden">
-        {/* Animated background elements */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500 rounded-full blur-3xl animate-pulse-slow"></div>
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
-        </div>
-
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <h2 className="text-5xl md:text-6xl lg:text-7xl font-black mb-10 tracking-tight fade-in-observer">
-            INTELLIGENT SKINCARE
-          </h2>
-          <p className="text-xl md:text-2xl text-gray-300 leading-relaxed mb-16 max-w-4xl mx-auto fade-in-observer">
-            We combine cutting-edge scientific research with personalized assessments
-            to deliver skincare solutions that are as unique as you are. Every product
-            is formulated with clinical precision and backed by transparent data.
+          <p className="text-gray-300 mb-8 max-w-2xl mx-auto">
+            Discover amazing products at unbeatable prices. Shop now and enjoy
+            free shipping on orders over ₹500!
           </p>
-          <div className="fade-in-observer">
-            <Button
-              variant="secondary"
-              onClick={() => window.location.href = '/science'}
-              className="shadow-3d-lg hover:shadow-glow-white transform hover:scale-105"
-            >
-              Our Science
-            </Button>
+          <div className="flex gap-4 justify-center">
+            <Link to="/shop">
+              <Button size="lg">
+                Shop Now
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </Link>
+            <Link to="/about">
+              <Button size="lg" variant="outline">
+                Learn More
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
-
-      {/* Features Section with 3D Cards */}
-      <section className="py-32 bg-gradient-to-b from-white via-gray-50 to-white relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            <FeatureCard 
-              icon={
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                  <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
-                </svg>
-              }
-              title="SCIENCE-BACKED"
-              description="Every formulation is developed using clinical research and tested for efficacy"
-              delay={0.1}
-            />
-
-            <FeatureCard 
-              icon={
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 6v6l4 2" />
-                </svg>
-              }
-              title="PERSONALIZED"
-              description="Take our assessment to receive product recommendations tailored to your skin"
-              delay={0.3}
-            />
-
-            <FeatureCard 
-              icon={
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                  <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                  <line x1="12" y1="22.08" x2="12" y2="12" />
-                </svg>
-              }
-              title="TRANSPARENT"
-              description="Full ingredient disclosure with detailed explanations of what each does"
-              delay={0.5}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section with Immersive Design */}
-      <section className="py-32 bg-white relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-black to-transparent"></div>
-          <div className="absolute top-1/2 left-0 w-1/3 h-px bg-gradient-to-r from-black to-transparent opacity-20"></div>
-          <div className="absolute top-1/2 right-0 w-1/3 h-px bg-gradient-to-l from-black to-transparent opacity-20"></div>
-        </div>
-
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <h2 className="text-5xl md:text-6xl lg:text-display-md font-black mb-10 tracking-tight fade-in-observer">
-            FIND YOUR PERFECT<br />ROUTINE
-          </h2>
-          <p className="text-xl md:text-2xl text-gray-700 leading-relaxed mb-16 max-w-3xl mx-auto fade-in-observer">
-            Our personalized skin assessment uses advanced algorithms to analyze
-            your unique skin profile and recommend the optimal products for your needs.
-          </p>
-          <div className="fade-in-observer">
-            <Button
-              variant="primary"
-              onClick={() => window.location.href = '/quiz'}
-              className="text-base shadow-3d-lg hover:shadow-glow-black transform hover:scale-105"
-            >
-              Start Assessment
-            </Button>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function FeatureCard({ 
-  icon, 
-  title, 
-  description, 
-  delay 
-}: { 
-  icon: React.ReactNode; 
-  title: string; 
-  description: string; 
-  delay: number;
-}) {
-  return (
-    <div 
-      className="group text-center fade-in-observer hover-lift"
-      style={{ transitionDelay: `${delay}s` }}
-    >
-      <div className="relative">
-        {/* Icon container with 3D effect */}
-        <div className="w-20 h-20 bg-black mx-auto mb-8 flex items-center justify-center rounded-2xl shadow-3d group-hover:shadow-3d-lg transition-all duration-400 transform group-hover:rotate-6 group-hover:scale-110">
-          {icon}
-        </div>
-        
-        {/* Glow effect */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-20 bg-black/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-400"></div>
-      </div>
-      
-      <h3 className="text-2xl font-black mb-4 tracking-tight group-hover:text-gray-700 transition-colors duration-300">
-        {title}
-      </h3>
-      <p className="text-gray-600 leading-relaxed">
-        {description}
-      </p>
-    </div>
-  );
-}
-
-function TestimonialCard({
-  name,
-  rating,
-  text,
-  delay
-}: {
-  name: string;
-  rating: number;
-  text: string;
-  delay: number;
-}) {
-  return (
-    <div 
-      className="bg-white text-black p-8 border-2 border-white hover:scale-105 transition-all duration-300 fade-in-observer"
-      style={{ transitionDelay: `${delay}s` }}
-    >
-      <div className="flex gap-1 mb-4">
-        {[...Array(rating)].map((_, i) => (
-          <Star key={i} size={20} fill="black" stroke="black" />
-        ))}
-      </div>
-      <p className="text-lg mb-6 leading-relaxed">"{text}"</p>
-      <p className="font-black text-sm uppercase tracking-wide">{name}</p>
     </div>
   );
 }
