@@ -1,111 +1,69 @@
-export const APP_NAME = 'OT-OnlyThing';
-export const APP_DESCRIPTION = 'Premium E-commerce Platform';
+// ============================================================
+// ONLY THING HEALTH & WELLNESS - CONSTANTS
+// ============================================================
 
-// Order statuses
-export const ORDER_STATUSES = {
-  PENDING: 'pending',
-  CONFIRMED: 'confirmed',
-  PROCESSING: 'processing',
-  SHIPPED: 'shipped',
-  DELIVERED: 'delivered',
-  CANCELLED: 'cancelled',
-  REFUNDED: 'refunded',
-} as const;
-
-export const ORDER_STATUS_LABELS: Record<string, string> = {
-  pending: 'Pending',
-  confirmed: 'Confirmed',
-  processing: 'Processing',
-  shipped: 'Shipped',
-  delivered: 'Delivered',
-  cancelled: 'Cancelled',
-  refunded: 'Refunded',
+export const COMPANY_INFO = {
+  name: 'Only Thing Health & Wellness',
+  tagline: "India's 1st Science-Backed, Data-Driven Intelligent Health & Wellness Company",
+  description: 'Intelligent Skincare & Smart Nutrition powered by science',
+  email: 'hello@onlything.in',
+  phone: '+91 9876543210',
+  address: 'Mumbai, Maharashtra, India',
 };
 
-// Payment statuses
-export const PAYMENT_STATUSES = {
-  PENDING: 'pending',
-  PAID: 'paid',
-  FAILED: 'failed',
-  REFUNDED: 'refunded',
-} as const;
+export const SKIN_TYPES = [
+  { value: 'dry', label: 'Dry', description: 'Tight, flaky, lacks moisture' },
+  { value: 'oily', label: 'Oily', description: 'Shiny, enlarged pores, prone to acne' },
+  { value: 'combination', label: 'Combination', description: 'Oily T-zone, dry cheeks' },
+  { value: 'sensitive', label: 'Sensitive', description: 'Easily irritated, redness-prone' },
+  { value: 'normal', label: 'Normal', description: 'Balanced, minimal concerns' },
+];
 
-export const PAYMENT_STATUS_LABELS: Record<string, string> = {
-  pending: 'Pending',
-  paid: 'Paid',
-  failed: 'Failed',
-  refunded: 'Refunded',
-};
+export const SKIN_CONCERNS = [
+  { value: 'acne', label: 'Acne & Breakouts', icon: '🔴' },
+  { value: 'aging', label: 'Anti-Aging', icon: '⏳' },
+  { value: 'pigmentation', label: 'Hyperpigmentation', icon: '🟤' },
+  { value: 'dryness', label: 'Dryness & Dehydration', icon: '💧' },
+  { value: 'dullness', label: 'Dull Skin', icon: '☁️' },
+  { value: 'sensitivity', label: 'Sensitivity & Redness', icon: '🔥' },
+  { value: 'dark-spots', label: 'Dark Spots', icon: '⚫' },
+  { value: 'fine-lines', label: 'Fine Lines & Wrinkles', icon: '〰️' },
+  { value: 'large-pores', label: 'Large Pores', icon: '🔍' },
+  { value: 'dark-circles', label: 'Dark Circles', icon: '👁️' },
+];
 
-// Query statuses
-export const QUERY_STATUSES = {
-  OPEN: 'open',
-  IN_PROGRESS: 'in_progress',
-  RESOLVED: 'resolved',
-  CLOSED: 'closed',
-} as const;
+export const PRODUCT_CATEGORIES = [
+  { name: 'Intelligent Skincare', slug: 'intelligent-skincare', icon: '✨' },
+  { name: 'Smart Serums', slug: 'smart-serums', icon: '💧' },
+  { name: 'Cleansers & Toners', slug: 'cleansers-toners', icon: '🧼' },
+  { name: 'Moisturizers & Creams', slug: 'moisturizers-creams', icon: '🧴' },
+  { name: 'Face Masks & Treatments', slug: 'face-masks-treatments', icon: '🎭' },
+  { name: 'Eye Care', slug: 'eye-care', icon: '👁️' },
+  { name: 'Sun Protection', slug: 'sun-protection', icon: '☀️' },
+  { name: 'Smart Nutrition', slug: 'smart-nutrition', icon: '💊' },
+  { name: 'Wellness Supplements', slug: 'wellness-supplements', icon: '🌿' },
+  { name: 'Gift Sets', slug: 'gift-sets', icon: '🎁' },
+];
 
-export const QUERY_STATUS_LABELS: Record<string, string> = {
-  open: 'Open',
-  in_progress: 'In Progress',
-  resolved: 'Resolved',
-  closed: 'Closed',
-};
-
-// Query priorities
-export const QUERY_PRIORITIES = {
-  LOW: 'low',
-  MEDIUM: 'medium',
-  HIGH: 'high',
-  URGENT: 'urgent',
-} as const;
-
-export const QUERY_PRIORITY_LABELS: Record<string, string> = {
-  low: 'Low',
-  medium: 'Medium',
-  high: 'High',
-  urgent: 'Urgent',
-};
-
-// User roles
-export const USER_ROLES = {
-  USER: 'user',
-  ADMIN: 'admin',
-} as const;
-
-// Blog post statuses
-export const BLOG_POST_STATUSES = {
-  DRAFT: 'draft',
-  PUBLISHED: 'published',
-  ARCHIVED: 'archived',
-} as const;
-
-// Pagination
-export const DEFAULT_PAGE_SIZE = 12;
-export const ADMIN_PAGE_SIZE = 20;
-
-// Currency
-export const CURRENCY_SYMBOL = '₹';
-export const CURRENCY_CODE = 'INR';
-
-// Tax rate (in percentage)
-export const TAX_RATE = 18;
-
-// Shipping cost
-export const SHIPPING_COST = 50;
-export const FREE_SHIPPING_THRESHOLD = 500;
-
-// Rating
-export const MAX_RATING = 5;
-export const MIN_RATING = 1;
-
-// Image upload
-export const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-
-// Storage buckets
-export const STORAGE_BUCKETS = {
-  PRODUCTS: 'products',
-  BLOG: 'blog',
-  AVATARS: 'avatars',
-} as const;
+export const CORE_BELIEFS = [
+  {
+    title: 'Intelligent Skincare',
+    description: 'Guided by cellular science and adaptive bioactive',
+    icon: '🧬',
+  },
+  {
+    title: 'Powered By Science',
+    description: 'Based on clinical evidence and next-gen biotechnology',
+    icon: '🔬',
+  },
+  {
+    title: 'Nature Meets AI',
+    description: 'Blending nature, AI, and innovation for long-term well-being',
+    icon: '🤖',
+  },
+  {
+    title: 'Data-Driven',
+    description: 'Measurable, scientific facts that back up every claim',
+    icon: '📊',
+  },
+];
