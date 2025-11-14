@@ -84,20 +84,31 @@ export default function HomePage() {
       {/* Trust Bar */}
       <TrustBar />
 
-      {/* Features Section */}
-      <section className="py-16 bg-gray-50">
+      {/* Features Section - Enhanced */}
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">
+              Why Choose Us
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Experience premium quality with our commitment to excellence
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, index) => (
-              <Card key={index} className="p-6 text-center hover:shadow-lg transition-shadow">
-                <div className={`${feature.bg} w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4`}>
+              <div 
+                key={index} 
+                className="group p-8 text-center hover:shadow-2xl transition-all duration-300 bg-white border border-gray-100 rounded-2xl hover:border-gray-200 hover:-translate-y-2"
+              >
+                <div className={`${feature.bg} w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
                   <feature.icon className={`w-8 h-8 ${feature.color}`} />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-xl font-bold text-gray-900 mb-3">
                   {feature.title}
                 </h3>
-                <p className="text-sm text-gray-600">{feature.description}</p>
-              </Card>
+                <p className="text-sm text-gray-600 leading-relaxed">{feature.description}</p>
+              </div>
             ))}
           </div>
         </div>
@@ -294,15 +305,33 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Stats Section */}
-      <section className="py-16 bg-black text-white">
-        <div className="container mx-auto px-4">
+      {/* Stats Section - Enhanced Design */}
+      <section className="py-20 bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `
+              linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(255,255,255,0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '30px 30px'
+          }}></div>
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <stat.icon className="w-12 h-12 mx-auto mb-4 opacity-80" />
-                <div className="text-3xl font-bold mb-2">{stat.value}</div>
-                <div className="text-primary-100">{stat.label}</div>
+              <div 
+                key={index} 
+                className="group text-center p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105"
+              >
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-500/20 to-accent-600/10 mb-4 group-hover:scale-110 transition-transform">
+                  <stat.icon className="w-8 h-8 text-accent-400" />
+                </div>
+                <div className="text-4xl font-black mb-2 text-white">{stat.value}</div>
+                <div className="text-sm font-semibold text-gray-400 group-hover:text-gray-300 transition-colors">
+                  {stat.label}
+                </div>
               </div>
             ))}
           </div>
