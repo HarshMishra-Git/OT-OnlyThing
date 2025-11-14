@@ -195,9 +195,9 @@ export default function ProductDetailPage() {
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Link to="/" className="hover:text-primary-600">Home</Link>
+            <Link to="/" className="hover:text-gray-900">Home</Link>
             <span>/</span>
-            <Link to="/shop" className="hover:text-primary-600">Shop</Link>
+            <Link to="/shop" className="hover:text-gray-900">Shop</Link>
             <span>/</span>
             <span className="text-gray-900">{product.name}</span>
           </div>
@@ -238,7 +238,7 @@ export default function ProductDetailPage() {
                     onClick={() => setSelectedImage(index)}
                     className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
                       selectedImage === index
-                        ? 'border-primary-600'
+                        ? 'border-gray-900'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
@@ -259,7 +259,7 @@ export default function ProductDetailPage() {
               {product.category && (
                 <Link
                   to={`/shop?category=${product.category.id}`}
-                  className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                  className="text-sm text-gray-900 hover:text-gray-600 font-medium"
                 >
                   {product.category.name}
                 </Link>
@@ -364,6 +364,7 @@ export default function ProductDetailPage() {
               <Button
                 onClick={handleAddToCart}
                 disabled={!isInStock(product.stock_quantity)}
+                variant="cta"
                 className="flex-1"
                 size="lg"
               >
@@ -386,7 +387,7 @@ export default function ProductDetailPage() {
             <Button
               onClick={handleBuyNow}
               disabled={!isInStock(product.stock_quantity)}
-              variant="secondary"
+              variant="primary"
               className="w-full"
               size="lg"
             >

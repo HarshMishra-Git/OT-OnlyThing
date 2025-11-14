@@ -56,7 +56,7 @@ export function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
@@ -139,15 +139,15 @@ export function SignupPage() {
               <input
                 type="checkbox"
                 required
-                className="w-4 h-4 mt-1 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                className="w-4 h-4 mt-1 text-gray-900 border-gray-300 rounded focus:ring-blue-500"
               />
               <label className="ml-2 text-sm text-gray-600">
                 I agree to the{' '}
-                <Link to="/terms" className="text-blue-600 hover:underline">
+                <Link to="/terms" className="text-gray-900 hover:underline">
                   Terms of Service
                 </Link>{' '}
                 and{' '}
-                <Link to="/privacy" className="text-blue-600 hover:underline">
+                <Link to="/privacy" className="text-gray-900 hover:underline">
                   Privacy Policy
                 </Link>
               </label>
@@ -185,7 +185,7 @@ export function SignupPage() {
           {/* Sign In Link */}
           <p className="mt-6 text-center text-sm text-gray-600">
             Already have an account?{' '}
-            <Link to="/login" className="font-medium text-blue-600 hover:text-blue-700">
+            <Link to="/login" className="font-medium text-gray-900 hover:text-gray-600">
               Sign in
             </Link>
           </p>

@@ -51,7 +51,7 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
@@ -60,7 +60,7 @@ export function LoginPage() {
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Email */}
             <div>
@@ -101,13 +101,13 @@ export function LoginPage() {
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-accent-600 border-gray-300 rounded focus:ring-accent-500"
                 />
                 <span className="ml-2 text-sm text-gray-600">Remember me</span>
               </label>
               <Link
                 to="/forgot-password"
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="text-sm text-gray-900 hover:text-gray-600 font-medium"
               >
                 Forgot password?
               </Link>
@@ -145,7 +145,7 @@ export function LoginPage() {
           {/* Sign Up Link */}
           <p className="mt-6 text-center text-sm text-gray-600">
             Don't have an account?{' '}
-            <Link to="/signup" className="font-medium text-blue-600 hover:text-blue-700">
+            <Link to="/signup" className="font-medium text-gray-900 hover:text-gray-600 underline">
               Sign up for free
             </Link>
           </p>
@@ -154,11 +154,11 @@ export function LoginPage() {
         {/* Footer */}
         <p className="mt-8 text-center text-sm text-gray-500">
           By signing in, you agree to our{' '}
-          <Link to="/terms" className="text-blue-600 hover:underline">
+          <Link to="/terms" className="text-gray-900 hover:underline">
             Terms of Service
           </Link>{' '}
           and{' '}
-          <Link to="/privacy" className="text-blue-600 hover:underline">
+          <Link to="/privacy" className="text-gray-900 hover:underline">
             Privacy Policy
           </Link>
         </p>

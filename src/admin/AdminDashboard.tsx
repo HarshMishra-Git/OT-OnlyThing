@@ -8,10 +8,10 @@ export const AdminDashboard = () => {
   const { user } = useAuth();
 
   const stats = [
-    { label: 'Total Products', value: '0', icon: Package, color: 'bg-blue-500' },
-    { label: 'Total Orders', value: '0', icon: ShoppingCart, color: 'bg-green-500' },
+    { label: 'Total Products', value: '0', icon: Package, color: 'bg-gray-900' },
+    { label: 'Total Orders', value: '0', icon: ShoppingCart, color: 'bg-accent-600' },
     { label: 'Pending Queries', value: '0', icon: MessageSquare, color: 'bg-yellow-500' },
-    { label: 'Blog Posts', value: '0', icon: FileText, color: 'bg-purple-500' },
+    { label: 'Blog Posts', value: '0', icon: FileText, color: 'bg-gray-700' },
   ];
 
   const quickActions = [
@@ -22,7 +22,7 @@ export const AdminDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -64,7 +64,7 @@ export const AdminDashboard = () => {
             {quickActions.map((action) => (
               <Link key={action.label} to={action.to}>
                 <Card hover className="p-6 text-center">
-                  <action.icon className="w-8 h-8 mx-auto mb-3 text-primary-600" />
+                  <action.icon className="w-8 h-8 mx-auto mb-3 text-gray-900" />
                   <p className="font-medium text-gray-900">{action.label}</p>
                 </Card>
               </Link>
@@ -76,7 +76,7 @@ export const AdminDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Link to="/admin/products">
             <Card hover className="p-6">
-              <Package className="w-10 h-10 text-primary-600 mb-4" />
+              <Package className="w-10 h-10 text-gray-900 mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Products</h3>
               <p className="text-sm text-gray-600">Manage your product catalog</p>
             </Card>
@@ -84,7 +84,7 @@ export const AdminDashboard = () => {
 
           <Link to="/admin/orders">
             <Card hover className="p-6">
-              <ShoppingCart className="w-10 h-10 text-green-600 mb-4" />
+              <ShoppingCart className="w-10 h-10 text-accent-600 mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Orders</h3>
               <p className="text-sm text-gray-600">View and manage orders</p>
             </Card>

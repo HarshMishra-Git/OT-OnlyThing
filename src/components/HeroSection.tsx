@@ -34,111 +34,99 @@ export default function HeroSection() {
   const rightProductTransform = scrollY > 50 ? `translate3d(-${scrollY * 0.5}px, ${scrollY * 0.8}px, 0) rotate(-${scrollY * 0.1}deg) scale(${Math.max(0.4, 1 - scrollY / 800)})` : 'translate3d(0, 0, 0) rotate(0deg) scale(1)';
 
   return (
-    <section className="relative h-screen flex items-center justify-center overflow-hidden bg-black grain-overlay">
-      {/* Background Image with Parallax - REMOVE VIDEO, USE ONLY IMAGE */}
-      <div 
-        className="absolute inset-0 transition-transform duration-100 ease-out"
-        style={{
-          transform: `translate3d(${mousePosition.x}px, ${mousePosition.y}px, 0) scale(1.1)`
-        }}
-      >
-        {/* REPLACE VIDEO WITH STATIC IMAGE */}
-        <div
-          className="w-full h-full bg-cover bg-center opacity-50"
-          style={{
-            backgroundImage: 'url(https://images.unsplash.com/photo-1556228720-195a672e8a03?w=1920&q=80)'
-          }}
-        />
+    <section className="relative h-[50vh] min-h-[600px] flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900">
+      {/* Animated Background Pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `
+            linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255,255,255,0.1) 1px, transparent 1px)
+          `,
+          backgroundSize: '50px 50px'
+        }}></div>
       </div>
 
-      {/* REST OF THE CODE STAYS THE SAME */}
       {/* Gradient Overlays for Depth */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60"></div>
-      <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-black/30"></div>
-
-      {/* Animated Geometric Shapes */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/30"></div>
+      
+      {/* Animated Particles/Shapes */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 border border-white/5 rounded-full animate-pulse-slow"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 border border-white/5 rounded-full animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/3 rounded-full animate-rotate-slow"></div>
-      </div>
-
-      {/* LEFT 3D FLOATING PRODUCT */}
-      <div 
-        className="hidden lg:block absolute left-8 xl:left-20 top-1/2 -translate-y-1/2 w-48 xl:w-64 pointer-events-none z-20 transition-all duration-300"
-        style={{
-          opacity: leftProductOpacity,
-          transform: leftProductTransform,
-        }}
-      >
-        <Floating3DProduct 
-          color="#00CED1"
-          mouseX={mousePosition.x}
-          mouseY={mousePosition.y}
-          side="left"
-        />
-      </div>
-
-      {/* RIGHT 3D FLOATING PRODUCT */}
-      <div 
-        className="hidden lg:block absolute right-8 xl:right-20 top-1/2 -translate-y-1/2 w-48 xl:w-64 pointer-events-none z-20 transition-all duration-300"
-        style={{
-          opacity: rightProductOpacity,
-          transform: rightProductTransform,
-        }}
-      >
-        <Floating3DProduct 
-          color="#FF69B4"
-          mouseX={mousePosition.x}
-          mouseY={mousePosition.y}
-          side="right"
-        />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent-600/5 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
       </div>
 
       {/* Content */}
-      <div className="relative z-10 text-center text-white px-4 max-w-6xl mx-auto">
+      <div className="relative z-10 text-center text-white px-4 max-w-5xl mx-auto py-8">
+        {/* Badge */}
+        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-6 py-2 rounded-full mb-6 border border-white/20 animate-fade-in-up">
+          <span className="w-2 h-2 bg-accent-500 rounded-full animate-pulse"></span>
+          <span className="text-sm font-semibold tracking-wide">Science-Backed Skincare</span>
+        </div>
+
         <h1 
           ref={titleRef}
-          className="text-5xl md:text-7xl lg:text-display-lg font-black mb-8 tracking-tighter leading-none animate-fade-in-up"
-          style={{
-            transform: `translate3d(${-mousePosition.x * 0.5}px, ${-mousePosition.y * 0.5}px, 0)`,
-            textShadow: '0 10px 40px rgba(0, 0, 0, 0.8), 0 0 80px rgba(255, 255, 255, 0.1)'
-          }}
+          className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 tracking-tight leading-tight animate-fade-in-up"
         >
-          THE FUTURE OF<br />
-          <span className="inline-block transform hover:scale-105 transition-transform duration-400">SKINCARE</span>
-          {' '}IS<br />
-          <span className="text-gradient bg-gradient-to-r from-white via-gray-300 to-white bg-clip-text text-transparent">
-            INTELLIGENT
+          THE FUTURE OF
+          <br />
+          <span className="bg-gradient-to-r from-white via-gray-100 to-white bg-clip-text text-transparent">
+            SKINCARE
           </span>
+          {' '}IS
+          <br />
+          <span className="text-accent-400">INTELLIGENT</span>
         </h1>
         
         <p 
-          className="text-lg md:text-2xl text-gray-200 mb-16 max-w-3xl mx-auto font-light tracking-wide leading-relaxed animate-fade-in-up"
-          style={{
-            transform: `translate3d(${-mousePosition.x * 0.3}px, ${-mousePosition.y * 0.3}px, 0)`,
-            animationDelay: '0.2s'
-          }}
+          className="text-base md:text-lg text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed animate-fade-in-up"
+          style={{ animationDelay: '0.2s' }}
         >
-          Science-backed, personalized solutions for radiant skin and holistic wellness
+          Personalized, science-backed solutions for radiant skin and holistic wellness
         </p>
         
         <div 
-          className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-fade-in-up"
+          className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up mb-8"
           style={{ animationDelay: '0.4s' }}
         >
           <button
             onClick={() => window.location.href = '/shop'}
-            className="px-8 py-4 bg-white text-black font-bold rounded-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-2xl"
+            className="group relative px-8 py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-2xl overflow-hidden"
           >
-            Shop Now
+            <span className="relative z-10 flex items-center gap-2">
+              Shop Now
+              <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </span>
           </button>
           <button
             onClick={() => window.location.href = '/quiz'}
-            className="px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-lg hover:bg-white hover:text-black transition-all duration-300 transform hover:scale-105"
+            className="px-8 py-3 bg-transparent border-2 border-white/30 text-white font-bold rounded-xl hover:bg-white/10 hover:border-white transition-all duration-300 transform hover:scale-105 backdrop-blur-sm"
           >
             Take Assessment
           </button>
+        </div>
+
+        {/* Trust Indicators */}
+        <div className="flex flex-wrap justify-center gap-8 text-sm text-gray-400 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-accent-500" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+            <span>4.8★ Average Rating</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Clinically Proven</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span>10,000+ Happy Customers</span>
+          </div>
         </div>
       </div>
 

@@ -79,9 +79,9 @@ export default function ShopPage() {
   const totalPages = products ? Math.ceil(products.length / filters.limit) : 1;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -143,7 +143,7 @@ export default function ShopPage() {
                   <h2 className="font-semibold text-gray-900">Filters</h2>
                   <button
                     onClick={clearFilters}
-                    className="text-sm text-primary-600 hover:text-primary-700"
+                    className="text-sm text-gray-900 hover:text-gray-600 font-medium"
                   >
                     Clear All
                   </button>
@@ -281,7 +281,7 @@ export default function ShopPage() {
 
                           <div className="p-4">
                             <Link to={`/product/${product.slug}`}>
-                              <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-primary-600 transition-colors">
+                              <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-gray-600 transition-colors">
                                 {product.name}
                               </h3>
                             </Link>
@@ -309,6 +309,7 @@ export default function ShopPage() {
                             <div className="flex gap-2">
                               <Button
                                 size="sm"
+                                variant="cta"
                                 className="flex-1"
                                 onClick={() => addToCart(product, 1)}
                               >
