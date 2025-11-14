@@ -29,7 +29,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="relative bg-luxury-gradient text-white overflow-hidden">
+    <footer className="relative bg-black text-white overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl animate-pulse-slow"></div>
@@ -37,7 +37,7 @@ export default function Footer() {
       </div>
 
       {/* Top Border Accent */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white to-transparent opacity-20"></div>
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
