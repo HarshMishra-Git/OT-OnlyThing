@@ -34,7 +34,7 @@ export default function HeroSection() {
   const rightProductTransform = scrollY > 50 ? `translate3d(-${scrollY * 0.5}px, ${scrollY * 0.8}px, 0) rotate(-${scrollY * 0.1}deg) scale(${Math.max(0.4, 1 - scrollY / 800)})` : 'translate3d(0, 0, 0) rotate(0deg) scale(1)';
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900">
+    <section className="relative h-[50vh] min-h-[600px] flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-900 via-black to-gray-900">
       {/* Animated Background Pattern */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute inset-0" style={{
@@ -56,16 +56,16 @@ export default function HeroSection() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 text-center text-white px-4 max-w-5xl mx-auto py-20">
+      <div className="relative z-10 text-center text-white px-4 max-w-5xl mx-auto py-8">
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-6 py-2 rounded-full mb-8 border border-white/20 animate-fade-in-up">
+        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-6 py-2 rounded-full mb-6 border border-white/20 animate-fade-in-up">
           <span className="w-2 h-2 bg-accent-500 rounded-full animate-pulse"></span>
           <span className="text-sm font-semibold tracking-wide">Science-Backed Skincare</span>
         </div>
 
         <h1 
           ref={titleRef}
-          className="text-5xl md:text-6xl lg:text-7xl font-black mb-6 tracking-tight leading-tight animate-fade-in-up"
+          className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 tracking-tight leading-tight animate-fade-in-up"
         >
           THE FUTURE OF
           <br />
@@ -78,19 +78,19 @@ export default function HeroSection() {
         </h1>
         
         <p 
-          className="text-lg md:text-xl text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed animate-fade-in-up"
+          className="text-base md:text-lg text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed animate-fade-in-up"
           style={{ animationDelay: '0.2s' }}
         >
           Personalized, science-backed solutions for radiant skin and holistic wellness
         </p>
         
         <div 
-          className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up"
+          className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up mb-8"
           style={{ animationDelay: '0.4s' }}
         >
           <button
             onClick={() => window.location.href = '/shop'}
-            className="group relative px-8 py-4 bg-white text-black font-bold rounded-xl hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-2xl overflow-hidden"
+            className="group relative px-8 py-3 bg-white text-black font-bold rounded-xl hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-2xl overflow-hidden"
           >
             <span className="relative z-10 flex items-center gap-2">
               Shop Now
@@ -101,14 +101,14 @@ export default function HeroSection() {
           </button>
           <button
             onClick={() => window.location.href = '/quiz'}
-            className="px-8 py-4 bg-transparent border-2 border-white/30 text-white font-bold rounded-xl hover:bg-white/10 hover:border-white transition-all duration-300 transform hover:scale-105 backdrop-blur-sm"
+            className="px-8 py-3 bg-transparent border-2 border-white/30 text-white font-bold rounded-xl hover:bg-white/10 hover:border-white transition-all duration-300 transform hover:scale-105 backdrop-blur-sm"
           >
             Take Assessment
           </button>
         </div>
 
         {/* Trust Indicators */}
-        <div className="mt-16 flex flex-wrap justify-center gap-8 text-sm text-gray-400 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+        <div className="flex flex-wrap justify-center gap-8 text-sm text-gray-400 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
           <div className="flex items-center gap-2">
             <svg className="w-5 h-5 text-accent-500" fill="currentColor" viewBox="0 0 20 20">
               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />

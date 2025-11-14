@@ -81,9 +81,6 @@ export default function HomePage() {
       {/* Hero Section */}
       <HeroSection />
 
-      {/* Trust Bar */}
-      <TrustBar />
-
       {/* Features Section - Enhanced */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">

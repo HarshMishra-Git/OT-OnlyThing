@@ -58,7 +58,7 @@ export default function Header() {
 
   return (
     <header className="bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100 sticky top-0 z-50">
-      <div className="container mx-auto px-6">
+      <div className="w-full px-6 max-w-none">
         <div className="flex items-center justify-between h-20">
           {/* Logo with enhanced styling */}
           <Link 
