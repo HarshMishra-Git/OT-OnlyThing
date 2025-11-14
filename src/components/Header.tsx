@@ -57,13 +57,13 @@ export default function Header() {
   ];
 
   return (
-    <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+    <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link 
             to="/" 
-            className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent hover:from-primary-700 hover:to-primary-900 transition-all"
+            className="text-2xl font-bold text-black hover:text-gray-700 transition-all"
           >
             OT-OnlyThing
           </Link>
@@ -74,7 +74,7 @@ export default function Header() {
               <Link
                 key={link.to}
                 to={link.to}
-                className="text-gray-700 hover:text-primary-600 font-medium transition-colors"
+                className="text-gray-900 hover:text-gray-600 font-medium transition-colors"
               >
                 {link.label}
               </Link>
@@ -90,7 +90,7 @@ export default function Header() {
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
               />
             </div>
           </form>
@@ -103,7 +103,7 @@ export default function Header() {
               className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors group"
               title="Wishlist"
             >
-              <Heart className="w-6 h-6 text-gray-700 group-hover:text-red-500 transition-colors" />
+              <Heart className="w-6 h-6 text-gray-900 group-hover:text-red-500 transition-colors" />
               {wishlistItems.length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
                   {wishlistItems.length}
@@ -117,9 +117,9 @@ export default function Header() {
               className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors group"
               title="Shopping Cart"
             >
-              <ShoppingCart className="w-6 h-6 text-gray-700 group-hover:text-primary-600 transition-colors" />
+              <ShoppingCart className="w-6 h-6 text-gray-900 group-hover:text-accent-600 transition-colors" />
               {itemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+                <span className="absolute -top-1 -right-1 bg-accent-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
                   {itemCount}
                 </span>
               )}
@@ -132,7 +132,7 @@ export default function Header() {
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                  <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-white text-sm font-bold">
                     {user.full_name?.charAt(0) || user.email.charAt(0).toUpperCase()}
                   </div>
                 </button>
@@ -176,7 +176,7 @@ export default function Header() {
                       {user.role === 'admin' && (
                         <Link
                           to="/admin"
-                          className="flex items-center gap-3 px-4 py-2 text-sm text-primary-600 hover:bg-primary-50 transition-colors"
+                          className="flex items-center gap-3 px-4 py-2 text-sm text-gray-900 hover:bg-gray-50 font-semibold transition-colors"
                           onClick={() => setIsUserMenuOpen(false)}
                         >
                           <Shield className="w-4 h-4" />
@@ -235,7 +235,7 @@ export default function Header() {
               placeholder="Search products..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
             />
           </div>
         </form>
@@ -288,7 +288,7 @@ export default function Header() {
                   <span>Cart</span>
                 </div>
                 {itemCount > 0 && (
-                  <span className="bg-primary-600 text-white text-xs rounded-full px-2 py-0.5">
+                  <span className="bg-accent-600 text-white text-xs rounded-full px-2 py-0.5">
                     {itemCount}
                   </span>
                 )}

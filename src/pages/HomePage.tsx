@@ -166,7 +166,7 @@ export default function HomePage() {
 
                   <div className="p-4">
                     <Link to={`/product/${product.slug}`}>
-                      <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-primary-600 transition-colors">
+                      <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-gray-600 transition-colors">
                         {product.name}
                       </h3>
                     </Link>
@@ -211,6 +211,7 @@ export default function HomePage() {
                     <div className="flex gap-2">
                       <Button
                         size="sm"
+                        variant="cta"
                         className="flex-1"
                         onClick={() => addToCart(product, 1)}
                       >
@@ -266,7 +267,7 @@ export default function HomePage() {
                   to={`/shop?category=${category.id}`}
                 >
                   <Card hover className="p-6 text-center">
-                    <div className="w-20 h-20 bg-gradient-to-br from-primary-50 to-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-200">
                       {category.image_url ? (
                         <img
                           src={category.image_url}
@@ -274,7 +275,7 @@ export default function HomePage() {
                           className="w-12 h-12 object-cover"
                         />
                       ) : (
-                        <ShoppingBag className="w-10 h-10 text-primary-600" />
+                        <ShoppingBag className="w-10 h-10 text-gray-900" />
                       )}
                     </div>
                     <h3 className="font-semibold text-gray-900">
@@ -294,7 +295,7 @@ export default function HomePage() {
       )}
 
       {/* Stats Section */}
-      <section className="py-16 bg-gradient-to-br from-primary-600 to-primary-700 text-white">
+      <section className="py-16 bg-black text-white">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
