@@ -11,6 +11,25 @@ export const COMPANY_INFO = {
   address: 'Mumbai, Maharashtra, India',
 };
 
+export const CURRENCY_SYMBOL = '₹';
+
+export const ORDER_STATUS_LABELS: Record<string, string> = {
+  pending: 'Pending',
+  confirmed: 'Confirmed',
+  processing: 'Processing',
+  shipped: 'Shipped',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
+  refunded: 'Refunded',
+};
+
+export const STORAGE_BUCKETS = {
+  products: 'products',
+  categories: 'categories',
+  blog: 'blog',
+  users: 'users',
+};
+
 export const SKIN_TYPES = [
   { value: 'dry', label: 'Dry', description: 'Tight, flaky, lacks moisture' },
   { value: 'oily', label: 'Oily', description: 'Shiny, enlarged pores, prone to acne' },

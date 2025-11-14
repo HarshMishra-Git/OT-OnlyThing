@@ -41,7 +41,7 @@ const priorityConfig = {
   urgent: { color: 'red', label: 'Urgent' },
 };
 
-export function QueryList() {
+export default function QueryDetail() {
   const [queries, setQueries] = useState<Query[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');

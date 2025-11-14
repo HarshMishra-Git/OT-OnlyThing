@@ -89,19 +89,61 @@ export const useAuthStore = create<AuthState>()(
       },
 
       checkAuth: async () => {
+        // Prevent multiple simultaneous checks
+        if (get().isLoading) {
+          console.log('Auth check already in progress, skipping...');
+          return;
+        }
+
         try {
           set({ isLoading: true });
-          const { user } = await AuthService.getCurrentUser();
           
-          if (user) {
-            const { data: profile } = await AuthService.getProfile(user.id);
-            if (profile) {
-              get().setUser(profile);
+          // Check if Supabase is configured
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+          if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+            console.warn('⚠️ Supabase not configured - skipping auth');
+            set({ user: null, isAuthenticated: false, isAdmin: false, isLoading: false });
+            return;
+          }
+          
+          // Quick timeout - 2 seconds max
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Auth timeout')), 2000)
+          );
+          
+          const authPromise = AuthService.getCurrentUser();
+          
+          try {
+            const result = await Promise.race([authPromise, timeoutPromise]);
+            
+            if (result?.user) {
+              console.log('✅ User found:', result.user.email);
+              
+              // Try to get profile (optional)
+              const { data: profile } = await AuthService.getProfile(result.user.id).catch(() => ({ data: null }));
+              
+              if (profile) {
+                get().setUser(profile);
+              } else {
+                // Use basic user info
+                const basicProfile: any = {
+                  id: result.user.id,
+                  email: result.user.email,
+                  full_name: result.user.user_metadata?.full_name || '',
+                  role: 'customer',
+                };
+                get().setUser(basicProfile);
+              }
+            } else {
+              console.log('ℹ️ No user session');
+              get().setUser(null);
             }
-          } else {
+          } catch (error: any) {
+            console.log('ℹ️ Auth check skipped:', error.message);
             get().setUser(null);
           }
-        } catch (error) {
+        } catch (error: any) {
+          console.error('❌ Auth error:', error.message);
           get().setUser(null);
         } finally {
           set({ isLoading: false });

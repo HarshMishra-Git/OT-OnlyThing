@@ -51,7 +51,7 @@ interface Order {
   };
 }
 
-export function OrderDetail() {
+export default function AdminSidebar() {
   const { id } = useParams();
   const navigate = useNavigate();
 

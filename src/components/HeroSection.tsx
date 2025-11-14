@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from './Button';
 
-export function HeroSection() {
-  const [videoError, setVideoError] = useState(false);
+export default function HeroSection() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [scrollY, setScrollY] = useState(0);
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -36,37 +35,23 @@ export function HeroSection() {
 
   return (
     <section className="relative h-screen flex items-center justify-center overflow-hidden bg-black grain-overlay">
-      {/* Background Video/Image with Parallax */}
+      {/* Background Image with Parallax - REMOVE VIDEO, USE ONLY IMAGE */}
       <div 
         className="absolute inset-0 transition-transform duration-100 ease-out"
         style={{
           transform: `translate3d(${mousePosition.x}px, ${mousePosition.y}px, 0) scale(1.1)`
         }}
       >
-        {!videoError ? (
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover opacity-50"
-            onError={() => setVideoError(true)}
-          >
-            <source
-              src="https://images.pexels.com/lib/api/pexels.mp4"
-              type="video/mp4"
-            />
-          </video>
-        ) : (
-          <div
-            className="w-full h-full bg-cover bg-center opacity-50"
-            style={{
-              backgroundImage: 'url(https://images.pexels.com/photos/3786157/pexels-photo-3786157.jpeg?auto=compress&cs=tinysrgb&w=1920)'
-            }}
-          />
-        )}
+        {/* REPLACE VIDEO WITH STATIC IMAGE */}
+        <div
+          className="w-full h-full bg-cover bg-center opacity-50"
+          style={{
+            backgroundImage: 'url(https://images.unsplash.com/photo-1556228720-195a672e8a03?w=1920&q=80)'
+          }}
+        />
       </div>
 
+      {/* REST OF THE CODE STAYS THE SAME */}
       {/* Gradient Overlays for Depth */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60"></div>
       <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-black/30"></div>
@@ -142,20 +127,18 @@ export function HeroSection() {
           className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-fade-in-up"
           style={{ animationDelay: '0.4s' }}
         >
-          <Button
-            variant="secondary"
+          <button
             onClick={() => window.location.href = '/shop'}
-            className="text-base shadow-3d-lg hover:shadow-glow-white transform hover:scale-105 transition-all duration-400"
+            className="px-8 py-4 bg-white text-black font-bold rounded-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-2xl"
           >
             Shop Now
-          </Button>
-          <Button
-            variant="ghost"
+          </button>
+          <button
             onClick={() => window.location.href = '/quiz'}
-            className="text-base text-white border-2 border-white hover:bg-white hover:text-black shadow-3d hover:shadow-glow-white transform hover:scale-105 transition-all duration-400"
+            className="px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-lg hover:bg-white hover:text-black transition-all duration-300 transform hover:scale-105"
           >
             Take Assessment
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -182,7 +165,7 @@ export function HeroSection() {
   );
 }
 
-// 3D Floating Product Component
+// 3D Floating Product Component - KEEP AS IS
 function Floating3DProduct({ color, mouseX, mouseY, side }: { color: string; mouseX: number; mouseY: number; side: 'left' | 'right' }) {
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
 

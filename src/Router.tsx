@@ -4,10 +4,10 @@ import { AdminLayout } from '@/components/layout/AdminLayout';
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 
-// Public Pages
-import { HomePage } from '@/pages/HomePage';
-import { ShopPage } from '@/pages/ShopPage';
-import { ProductDetailPage } from '@/pages/ProductDetailPage';
+// Public Pages - UPDATED IMPORTS
+import HomePage from '@/pages/HomePage';
+import ShopPage from '@/pages/ShopPage';
+import ProductDetailPage from '@/pages/ProductDetailPage';
 import { CartPage } from '@/pages/CartPage';
 import { CheckoutPage } from '@/pages/CheckoutPage';
 import { OrderConfirmationPage } from '@/pages/OrderConfirmationPage';
@@ -22,20 +22,20 @@ import { SciencePage } from '@/pages/SciencePage';
 import { QuizPage } from '@/pages/QuizPage';
 
 // User Pages
-import { AccountPage } from '@/pages/AccountPage';
+import AccountPage from '@/pages/AccountPage';
 
 // Admin Pages
 import { AdminDashboard } from '@/admin/AdminDashboard';
 import { ProductList } from '@/admin/pages/Products/ProductList';
 import { ProductForm } from '@/admin/pages/Products/ProductForm';
 import { QueryList } from '@/admin/pages/Queries/QueryList';
-import { QueryDetail } from '@/admin/pages/Queries/QueryDetail';
+import QueryDetail from '@/admin/pages/Queries/QueryDetail';
 import { BlogList } from '@/admin/pages/Blog/BlogList';
 import { BlogEditor } from '@/admin/pages/Blog/BlogEditor';
 import { OrderList } from '@/admin/pages/Orders/OrderList';
 import { OrderDetail } from '@/admin/pages/Orders/OrderDetail';
 
-export function Router() {
+export default function Router() {
   return (
     <BrowserRouter>
       <ErrorBoundary>

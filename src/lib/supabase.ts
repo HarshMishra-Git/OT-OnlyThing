@@ -1,43 +1,50 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/database.types';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
+// Check if Supabase is configured
+if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder')) {
+  console.warn('⚠️ Supabase not configured. Some features will be disabled.');
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    autoRefreshToken: true,
     persistSession: true,
+    autoRefreshToken: true,
     detectSessionInUrl: true,
+  },
+  global: {
+    headers: {
+      'x-client-info': 'onlything-web',
+    },
+  },
+  realtime: {
+    timeout: 3000,
   },
 });
 
-// Auth helpers
-export const signInWithGoogle = async () => {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
-    },
-  });
-  return { data, error };
+// Test connection with timeout
+const testConnection = async () => {
+  if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+    console.log('🔧 Running in development mode without Supabase');
+    return;
+  }
+
+  try {
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Connection timeout')), 3000)
+    );
+
+    const testPromise = supabase
+      .from('profiles')
+      .select('count', { count: 'exact', head: true });
+
+    await Promise.race([testPromise, timeoutPromise]);
+    console.log('✅ Supabase connected successfully');
+  } catch (error: any) {
+    console.error('❌ Supabase connection failed:', error.message);
+  }
 };
 
-export const signOut = async () => {
-  const { error } = await supabase.auth.signOut();
-  return { error };
-};
-
-export const getCurrentUser = async () => {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  return { user, error };
-};
-
-export const getCurrentSession = async () => {
-  const { data: { session }, error } = await supabase.auth.getSession();
-  return { session, error };
-};
+testConnection();

@@ -1,15 +1,20 @@
-import { useEffect } from 'react';
-import { useAuthStore } from '@/stores/authStore';
+import { useEffect, useState } from 'react';
 import Router from './Router';
 import { LoadingScreen } from '@/components/common/LoadingScreen';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 
 function App() {
-  const { checkAuth, isLoading } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    // Set max loading time to 1 second
+    const timer = setTimeout(() => {
+      console.log('✅ App initialized');
+      setIsLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   if (isLoading) {
     return <LoadingScreen />;

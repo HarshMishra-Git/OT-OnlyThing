@@ -9,7 +9,7 @@ interface TrustStat {
   color: string;
 }
 
-export function TrustBar() {
+export default function TrustBar() {
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLDivElement>(null);
 

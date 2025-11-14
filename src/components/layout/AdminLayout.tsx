@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
-import { AdminSidebar } from '@/admin/components/AdminSidebar';
+import AdminSidebar from '@/admin/components/AdminSidebar';
 import { AdminHeader } from '@/admin/components/AdminHeader';
 import { Spinner } from '@/components/common/Spinner';
 
