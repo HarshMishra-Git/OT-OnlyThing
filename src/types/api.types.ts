@@ -77,6 +77,20 @@ export interface CreateOrderDTO {
   payment_method: string;
 }
 
+// Address input used when creating/updating addresses
+export interface AddressInput {
+  full_name: string;
+  phone: string;
+  address_line1: string;
+  address_line2?: string | null;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  address_type: 'home' | 'work' | 'other';
+  is_default?: boolean;
+}
+
 export interface CreateReviewDTO {
   product_id: string;
   rating: number;

@@ -1,94 +1,24 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { useEffect } from 'react';
+import { useCart } from '@/hooks/useCart';
 import { Button } from '../components/Button';
 import { Trash2 } from 'lucide-react';
-
-interface CartItem {
-  id: string;
-  quantity: number;
-  products: {
-    id: string;
-    name: string;
-    price: number;
-    image_url: string;
-    slug: string;
-    stock_quantity: number;
-  };
-}
+import { generateSEOTags, updateMetaTags } from '@/lib/seo';
+import { Link } from 'react-router-dom';
 
 export function CartPage() {
-  const { user } = useAuth();
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { items, updateQuantity, removeFromCart, subtotal } = useCart();
 
   useEffect(() => {
-    if (!user) {
-      window.location.href = '/login';
-      return;
-    }
-
-    fetchCartItems();
-  }, [user]);
-
-  async function fetchCartItems() {
-    try {
-      const { data, error } = await supabase
-        .from('cart_items')
-        .select('id, quantity, products(id, name, price, image_url, slug, stock_quantity)')
-        .eq('user_id', user!.id);
-
-      if (error) throw error;
-      setCartItems(data || []);
-    } catch (error) {
-      console.error('Error fetching cart:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function updateQuantity(itemId: string, newQuantity: number) {
-    if (newQuantity < 1) return;
-
-    try {
-      const { error } = await supabase
-        .from('cart_items')
-        .update({ quantity: newQuantity })
-        .eq('id', itemId);
-
-      if (error) throw error;
-      fetchCartItems();
-    } catch (error) {
-      console.error('Error updating quantity:', error);
-    }
-  }
-
-  async function removeItem(itemId: string) {
-    try {
-      const { error } = await supabase
-        .from('cart_items')
-        .delete()
-        .eq('id', itemId);
-
-      if (error) throw error;
-      fetchCartItems();
-    } catch (error) {
-      console.error('Error removing item:', error);
-    }
-  }
-
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.products.price * item.quantity,
-    0
-  );
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white pt-20 flex items-center justify-center">
-        <p className="text-gray-500">Loading cart...</p>
-      </div>
-    );
-  }
+    const tags = generateSEOTags({
+      title: 'Your Cart | OnlyThing',
+      description: 'Review items in your cart and proceed to checkout securely.',
+      keywords: ['cart', 'shopping cart', 'OnlyThing'],
+      image: items[0]?.product?.images?.[0]?.image_url || '/og-default.jpg',
+      url: window.location.href,
+      type: 'website',
+    });
+    updateMetaTags(tags);
+  }, [items]);
 
   return (
     <div className="min-h-screen bg-white pt-20">
@@ -97,37 +27,38 @@ export function CartPage() {
           YOUR CART
         </h1>
 
-        {cartItems.length === 0 ? (
+        {items.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500 mb-6">Your cart is empty</p>
-            <Button onClick={() => window.location.href = '/shop'}>
-              Continue Shopping
-            </Button>
+            <Link to="/shop">
+              <Button>Continue Shopping</Button>
+            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             <div className="lg:col-span-2 space-y-6">
-              {cartItems.map((item) => (
+              {items.map((item) => (
                 <div
-                  key={item.id}
+                  key={`${item.product.id}-${item.variantId || ''}`}
                   className="flex gap-6 border-2 border-gray-200 p-6"
                 >
                   <img
-                    src={item.products.image_url}
-                    alt={item.products.name}
+                    src={item.product.images?.[0]?.image_url || '/placeholder.jpg'}
+                    alt={item.product.name}
+                    loading="lazy"
                     className="w-24 h-24 object-cover border-2 border-gray-200"
                   />
                   <div className="flex-1">
                     <h3 className="font-bold text-lg mb-2">
-                      {item.products.name}
+                      {item.product.name}
                     </h3>
                     <p className="text-xl font-black mb-4">
-                      ₹{item.products.price.toFixed(2)}
+                      ₹{item.unitPrice.toFixed(2)}
                     </p>
                     <div className="flex items-center gap-4">
                       <div className="flex items-center border-2 border-black">
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.product.id, item.quantity - 1, item.variantId)}
                           className="px-3 py-1 font-bold hover:bg-gray-100"
                         >
                           -
@@ -136,19 +67,14 @@ export function CartPage() {
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() =>
-                            updateQuantity(
-                              item.id,
-                              Math.min(item.products.stock_quantity, item.quantity + 1)
-                            )
-                          }
+                          onClick={() => updateQuantity(item.product.id, item.quantity + 1, item.variantId)}
                           className="px-3 py-1 font-bold hover:bg-gray-100"
                         >
                           +
                         </button>
                       </div>
                       <button
-                        onClick={() => removeItem(item.id)}
+                        onClick={() => removeFromCart(item.product.id, item.variantId)}
                         className="text-gray-500 hover:text-black transition-colors"
                       >
                         <Trash2 size={20} />
@@ -177,12 +103,9 @@ export function CartPage() {
                     <span>Total</span>
                     <span>₹{subtotal.toFixed(2)}</span>
                   </div>
-                  <Button
-                    onClick={() => window.location.href = '/checkout'}
-                    className="w-full"
-                  >
-                    Proceed to Checkout
-                  </Button>
+                  <Link to="/checkout">
+                    <Button className="w-full">Proceed to Checkout</Button>
+                  </Link>
                 </div>
               </div>
             </div>

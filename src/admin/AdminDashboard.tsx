@@ -3,15 +3,57 @@ import { useAuth } from '@/hooks/useAuth';
 import { Package, ShoppingCart, MessageSquare, FileText, Users, TrendingUp } from 'lucide-react';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
+import { useQuery } from '@tanstack/react-query';
+import { OrderService } from '@/services/order.service';
+import { QueryService } from '@/services/query.service';
+import { ProductService } from '@/services/product.service';
+import { BlogService } from '@/services/blog.service';
 
 export const AdminDashboard = () => {
   const { user } = useAuth();
 
+  // Stats queries
+  const { data: orderStats, isLoading: loadingOrders } = useQuery({
+    queryKey: ['admin-stats', 'orders'],
+    queryFn: async () => {
+      const { data, error } = await OrderService.getOrderStats();
+      if (error) throw new Error(error);
+      return data as { total: number };
+    },
+  });
+
+  const { data: queryStats, isLoading: loadingQueries } = useQuery({
+    queryKey: ['admin-stats', 'queries'],
+    queryFn: async () => {
+      const { data, error } = await QueryService.getQueryStats();
+      if (error) throw new Error(error);
+      return data as { open: number };
+    },
+  });
+
+  const { data: productStats, isLoading: loadingProducts } = useQuery({
+    queryKey: ['admin-stats', 'products'],
+    queryFn: async () => {
+      const { data, error } = await ProductService.getProductStats();
+      if (error) throw new Error(error);
+      return data as { total: number };
+    },
+  });
+
+  const { data: blogStats, isLoading: loadingBlog } = useQuery({
+    queryKey: ['admin-stats', 'blog'],
+    queryFn: async () => {
+      const { data, error } = await BlogService.getBlogStats();
+      if (error) throw new Error(error);
+      return data as { total: number };
+    },
+  });
+
   const stats = [
-    { label: 'Total Products', value: '0', icon: Package, color: 'bg-blue-500' },
-    { label: 'Total Orders', value: '0', icon: ShoppingCart, color: 'bg-green-500' },
-    { label: 'Pending Queries', value: '0', icon: MessageSquare, color: 'bg-yellow-500' },
-    { label: 'Blog Posts', value: '0', icon: FileText, color: 'bg-purple-500' },
+    { label: 'Total Products', value: loadingProducts ? '...' : String(productStats?.total ?? 0), icon: Package, color: 'bg-blue-500' },
+    { label: 'Total Orders', value: loadingOrders ? '...' : String(orderStats?.total ?? 0), icon: ShoppingCart, color: 'bg-green-500' },
+    { label: 'Pending Queries', value: loadingQueries ? '...' : String(queryStats?.open ?? 0), icon: MessageSquare, color: 'bg-yellow-500' },
+    { label: 'Blog Posts', value: loadingBlog ? '...' : String(blogStats?.total ?? 0), icon: FileText, color: 'bg-purple-500' },
   ];
 
   const quickActions = [

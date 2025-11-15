@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Search, Package, DollarSign, TrendingUp, 
   Clock, CheckCircle, XCircle, Truck 
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { OrderService } from '@/services/order.service';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { Spinner } from '@/components/common/Spinner';
@@ -37,88 +38,60 @@ const statusConfig = {
 };
 
 export function OrderList() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPayment, setFilterPayment] = useState('all');
 
-  useEffect(() => {
-    loadOrders();
-  }, []);
-
-  const loadOrders = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          profiles:user_id (
-            full_name,
-            email
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setOrders(data || []);
-    } catch (error) {
-      toast.error('Failed to load orders');
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateOrderStatus = async (orderId: string, status: string) => {
-    try {
-      const updates: any = {
-        status,
-        updated_at: new Date().toISOString(),
-      };
-
-      if (status === 'shipped') {
-        updates.shipped_at = new Date().toISOString();
-      } else if (status === 'delivered') {
-        updates.delivered_at = new Date().toISOString();
-      }
-
-      const { error } = await supabase
-        .from('orders')
-        .update(updates)
-        .eq('id', orderId);
-
-      if (error) throw error;
-      toast.success('Order status updated');
-      loadOrders();
-    } catch (error) {
-      toast.error('Failed to update order');
-    }
-  };
-
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
-      order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = filterStatus === 'all' || order.status === filterStatus;
-    const matchesPayment = filterPayment === 'all' || order.payment_status === filterPayment;
-    
-    return matchesSearch && matchesStatus && matchesPayment;
+  const { data: ordersData, isLoading, refetch } = useQuery({
+    queryKey: ['admin-orders'],
+    queryFn: async () => {
+      const { data, error } = await OrderService.getAllOrders();
+      if (error) throw new Error(error);
+      return data as any as Order[];
+    },
   });
 
-  const stats = {
-    total: orders.length,
-    pending: orders.filter(o => o.status === 'pending').length,
-    processing: orders.filter(o => o.status === 'processing').length,
-    revenue: orders
-      .filter(o => o.payment_status === 'paid')
-      .reduce((sum, o) => sum + parseFloat(o.total.toString()), 0),
-  };
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
+      const { error } = await OrderService.updateOrderStatus(orderId, status);
+      if (error) throw new Error(error);
+    },
+    onSuccess: () => {
+      toast.success('Order status updated');
+      refetch();
+    },
+    onError: () => {
+      toast.error('Failed to update order');
+    },
+  });
 
-  if (loading) {
+  const filteredOrders = useMemo(() => {
+    const orders = ordersData || [];
+    const matchesSearch = 
+      (o: Order) =>
+        o.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        o.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        o.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = (o: Order) => filterStatus === 'all' || o.status === filterStatus;
+    const matchesPayment = (o: Order) => filterPayment === 'all' || o.payment_status === filterPayment;
+    
+    return orders.filter((o) => matchesSearch(o) && matchesStatus(o) && matchesPayment(o));
+  }, [ordersData, searchTerm, filterStatus, filterPayment]);
+
+  const stats = useMemo(() => {
+    const orders = ordersData || [];
+    return {
+      total: orders.length,
+      pending: orders.filter(o => o.status === 'pending').length,
+      processing: orders.filter(o => o.status === 'processing').length,
+      revenue: orders
+        .filter(o => o.payment_status === 'paid')
+        .reduce((sum, o) => sum + parseFloat(o.total.toString()), 0),
+    };
+  }, [ordersData]);
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <Spinner size="lg" />
@@ -270,7 +243,7 @@ export function OrderList() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <select
                       value={order.status}
-                      onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                      onChange={(e) => updateStatusMutation.mutate({ orderId: order.id, status: e.target.value })}
                       className={`px-3 py-1 rounded-full text-xs font-medium border-2 cursor-pointer
                         ${order.status === 'pending' ? 'bg-yellow-50 border-yellow-200 text-yellow-700' : ''}
                         ${order.status === 'confirmed' ? 'bg-blue-50 border-blue-200 text-blue-700' : ''}

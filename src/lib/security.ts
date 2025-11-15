@@ -1,5 +1,4 @@
 import DOMPurify from 'isomorphic-dompurify';
-import { z } from 'zod';
 
 /**
  * Sanitize HTML to prevent XSS attacks
@@ -14,29 +13,14 @@ export const sanitizeHtml = (dirty: string): string => {
 /**
  * Sanitize user input
  */
-export const sanitizeInput = (input: string): string => {
-  return input
-    .trim()
-    .replace(/[<>]/g, '') // Remove < and >
-    .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/on\w+=/gi, ''); // Remove event handlers
-};
+// For non-HTML inputs, prefer strict validation and encoding at sinks.
+// If a plain string needs cleaning, use trim only and validate via schemas.
+export const sanitizeInput = (input: string): string => input.trim();
 
 /**
  * Validate email format
  */
-export const isValidEmail = (email: string): boolean => {
-  const emailSchema = z.string().email();
-  return emailSchema.safeParse(email).success;
-};
-
-/**
- * Validate phone number (Indian format)
- */
-export const isValidPhone = (phone: string): boolean => {
-  const phoneRegex = /^[6-9]\d{9}$/;
-  return phoneRegex.test(phone.replace(/\D/g, ''));
-};
+// Remove duplicate validators: use implementations in src/lib/utils.ts or zod schemas in validators.ts
 
 /**
  * Check if URL is safe
@@ -125,24 +109,31 @@ export const validatePasswordStrength = (password: string): {
 /**
  * Prevent SQL injection in raw queries
  */
-export const escapeSql = (value: string): string => {
-  return value.replace(/'/g, "''");
-};
+// Removed: escapeSql. Use parameterized queries/APIs; do NOT attempt client-side SQL escaping.
 
 /**
  * Content Security Policy headers
  */
-export const CSP_HEADERS = {
-  'Content-Security-Policy': [
+export const getCSPHeaders = () => {
+  const dev = import.meta.env.DEV;
+  const base = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com",
+    // Keep style inline to avoid breaking UI libraries; consider hashing/noncing if needed later
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: https: blob:",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.razorpay.com",
-  ].join('; '),
-  'X-Frame-Options': 'DENY',
-  'X-Content-Type-Options': 'nosniff',
-  'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.razorpay.com"
+  ];
+  const scriptSrcDev = "script-src 'self' 'unsafe-eval' https://checkout.razorpay.com";
+  const scriptSrcProd = "script-src 'self' https://checkout.razorpay.com";
+  const csp = [...base, dev ? scriptSrcDev : scriptSrcProd].join('; ');
+  return {
+    'Content-Security-Policy': csp,
+    'X-Frame-Options': 'DENY',
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
+  } as Record<string, string>;
 };
+
+export const getCSPMetaContent = (): string => getCSPHeaders()['Content-Security-Policy'];

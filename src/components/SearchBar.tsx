@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Search, X } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { useProductSearch } from '@/hooks/useProducts';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface Product {
   id: string;
@@ -14,8 +15,9 @@ interface Product {
 export function SearchBar() {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebounce(query, 200);
   const [results, setResults] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { data, isFetching } = useProductSearch(debouncedQuery);
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -29,34 +31,26 @@ export function SearchBar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const mapped = useMemo(
+    () =>
+      (data || []).slice(0, 5).map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        price: p.price,
+        image_url: p.images?.[0]?.image_url ?? '',
+        category: p.category?.name ?? '',
+      })),
+    [data]
+  );
+
   useEffect(() => {
-    const searchProducts = async () => {
-      if (query.length < 2) {
-        setResults([]);
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('products')
-          .select('id, name, slug, price, image_url, category')
-          .eq('is_active', true)
-          .ilike('name', `%${query}%`)
-          .limit(5);
-
-        if (error) throw error;
-        setResults(data || []);
-      } catch (error) {
-        console.error('Search error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const debounce = setTimeout(searchProducts, 300);
-    return () => clearTimeout(debounce);
-  }, [query]);
+    if (debouncedQuery.length < 2) {
+      setResults([]);
+      return;
+    }
+    setResults(mapped);
+  }, [mapped, debouncedQuery]);
 
   const handleClear = () => {
     setQuery('');
@@ -95,7 +89,7 @@ export function SearchBar() {
         </div>
 
         {/* Animated Progress Bar */}
-        {loading && (
+        {isFetching && (
           <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-200 overflow-hidden rounded-full">
             <div className="h-full bg-black animate-progress-bar" />
           </div>
@@ -105,7 +99,7 @@ export function SearchBar() {
       {/* Search Results Dropdown */}
       {isOpen && query.length >= 2 && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-200 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-down z-50 max-h-96 overflow-y-auto">
-          {loading ? (
+          {isFetching ? (
             <div className="p-8 text-center">
               <div className="inline-block w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin" />
               <p className="text-sm text-gray-500 mt-3">Searching...</p>
@@ -122,6 +116,7 @@ export function SearchBar() {
                     <img
                       src={product.image_url}
                       alt={product.name}
+                      loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
                   </div>

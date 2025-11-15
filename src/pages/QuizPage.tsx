@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '../components/Button';
 import { CheckCircle, Sparkles } from 'lucide-react';
+import { generateSEOTags, updateMetaTags } from '@/lib/seo';
 
 interface QuizQuestion {
   id: string;
@@ -56,6 +57,18 @@ export function QuizPage() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [completed, setCompleted] = useState(false);
+
+  useEffect(() => {
+    const tags = generateSEOTags({
+      title: 'Skin Assessment | OnlyThing',
+      description: 'Take our personalized skin assessment and get tailored product recommendations.',
+      keywords: ['quiz', 'assessment', 'skin type', 'OnlyThing'],
+      image: '/og-default.jpg',
+      url: window.location.href,
+      type: 'website',
+    });
+    updateMetaTags(tags);
+  }, []);
 
   const handleAnswer = (answer: string) => {
     const question = questions[currentQuestion];

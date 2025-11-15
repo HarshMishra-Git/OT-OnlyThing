@@ -1,11 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
+import { safeLog, safeWarn, safeError } from '@/lib/logger';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 // Check if Supabase is configured
 if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder')) {
-  console.warn('⚠️ Supabase not configured. Some features will be disabled.');
+  safeWarn('⚠️ Supabase not configured. Some features will be disabled.');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -27,7 +28,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 // Test connection with timeout
 const testConnection = async () => {
   if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
-    console.log('🔧 Running in development mode without Supabase');
+    safeLog('🔧 Running in development mode without Supabase');
     return;
   }
 
@@ -41,9 +42,9 @@ const testConnection = async () => {
       .select('count', { count: 'exact', head: true });
 
     await Promise.race([testPromise, timeoutPromise]);
-    console.log('✅ Supabase connected successfully');
+    safeLog('✅ Supabase connected successfully');
   } catch (error: any) {
-    console.error('❌ Supabase connection failed:', error.message);
+    safeError('❌ Supabase connection failed:', error.message);
   }
 };
 

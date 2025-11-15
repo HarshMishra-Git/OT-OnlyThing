@@ -7,6 +7,7 @@ import { Rating } from '@/components/common/Rating';
 import { Spinner } from '@/components/common/Spinner';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Check, X, Star, ArrowLeft } from 'lucide-react';
+import { Undo2 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -28,6 +29,20 @@ export const ReviewsListPage = () => {
     },
     onSuccess: () => {
       toast.success('Review approved');
+      refetch();
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
+  const unapproveMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await ReviewService.unapproveReview(id);
+      if (error) throw new Error(error);
+    },
+    onSuccess: () => {
+      toast.success('Review unapproved');
       refetch();
     },
     onError: (error: any) => {
@@ -134,7 +149,7 @@ export const ReviewsListPage = () => {
                   </div>
 
                   <div className="flex items-center gap-2 ml-4">
-                    {!review.is_approved && (
+                    {!review.is_approved ? (
                       <Button
                         size="sm"
                         variant="outline"
@@ -143,6 +158,16 @@ export const ReviewsListPage = () => {
                       >
                         <Check className="w-4 h-4 mr-2" />
                         Approve
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => unapproveMutation.mutate(review.id)}
+                        isLoading={unapproveMutation.isPending}
+                      >
+                        <Undo2 className="w-4 h-4 mr-2" />
+                        Unapprove
                       </Button>
                     )}
                     <Button

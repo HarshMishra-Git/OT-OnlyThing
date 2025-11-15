@@ -63,8 +63,12 @@ export async function initiateRazorpayPayment(options: RazorpayOptions) {
     }
 
     // Razorpay options
+    const keyId = (import.meta.env.VITE_RAZORPAY_TEST_MODE === 'true')
+      ? (import.meta.env.VITE_RAZORPAY_KEY_ID_TEST || import.meta.env.VITE_RAZORPAY_KEY_ID)
+      : import.meta.env.VITE_RAZORPAY_KEY_ID;
+
     const razorpayOptions = {
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      key: keyId,
       amount: options.amount,
       currency: options.currency,
       name: 'OT-OnlyThing',
@@ -82,13 +86,13 @@ export async function initiateRazorpayPayment(options: RazorpayOptions) {
       handler: async function (response: RazorpaySuccessResponse) {
         try {
           // Verify payment on backend
-          const verified = await PaymentService.verifyPayment({
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
+          const { success } = await PaymentService.verifyPayment({
+            orderId: response.razorpay_order_id,
+            paymentId: response.razorpay_payment_id,
+            signature: response.razorpay_signature,
           });
 
-          if (verified) {
+          if (success) {
             options.onSuccess(response);
           } else {
             options.onError(new Error('Payment verification failed'));

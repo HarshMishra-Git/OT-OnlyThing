@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 
 export const useAuth = () => {
@@ -14,9 +14,14 @@ export const useAuth = () => {
     updateProfile,
   } = useAuthStore();
 
+  const hasChecked = useRef(false);
+
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    if (!hasChecked.current) {
+      hasChecked.current = true;
+      checkAuth();
+    }
+  }, []);
 
   return {
     user,

@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { Product3D } from './Product3D';
+import { useMemo, lazy, Suspense } from 'react';
+import { useFeaturedProducts } from '@/hooks/useProducts';
 import { Button } from './Button';
+
+const Product3D = lazy(() => import('./Product3D'));
 
 interface Product {
   id: string;
@@ -13,31 +14,21 @@ interface Product {
 }
 
 export function FeaturedProducts() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading } = useFeaturedProducts(4);
+  const products = useMemo(
+    () =>
+      (data || []).map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        price: p.price,
+        image_url: p.images?.[0]?.image_url ?? '',
+        category: p.category?.name,
+      })),
+    [data]
+  );
 
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const { data, error } = await supabase
-          .from('products')
-          .select('id, name, slug, price, image_url, category')
-          .eq('is_active', true)
-          .limit(4);
-
-        if (error) throw error;
-        setProducts(data || []);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchProducts();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -78,7 +69,9 @@ export function FeaturedProducts() {
                   id={index === 0 ? 'featured-product-first' : index === products.length - 1 ? 'featured-product-last' : undefined}
                   className="relative"
                 >
-                  <Product3D product={product} />
+                  <Suspense fallback={<div className="w-full h-[300px] bg-gray-100 animate-pulse rounded" />}>
+                    <Product3D product={product} />
+                  </Suspense>
                 </div>
               ))}
             </div>

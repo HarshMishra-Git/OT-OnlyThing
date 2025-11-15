@@ -306,4 +306,26 @@ export const BlogService = {
       return { data: null, error: error.message };
     }
   },
+
+  // ADMIN: Get blog statistics
+  async getBlogStats() {
+    try {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('status, is_featured');
+
+      if (error) throw error;
+
+      const stats = {
+        total: data.length,
+        published: data.filter((p: any) => p.status === 'published').length,
+        draft: data.filter((p: any) => p.status === 'draft').length,
+        featured: data.filter((p: any) => p.is_featured).length,
+      };
+
+      return { data: stats, error: null };
+    } catch (error: any) {
+      return { data: null, error: error.message };
+    }
+  },
 };

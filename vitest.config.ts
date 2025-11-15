@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
@@ -106,5 +106,16 @@ export default defineConfig({
       'react-hook-form',
       'zod',
     ],
+  },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['src/tests/setup.ts'],
+    globals: true,
+    coverage: {
+      provider: 'c8',
+      reporter: ['text', 'json', 'html'],
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/tests/**'],
+    },
   },
 });

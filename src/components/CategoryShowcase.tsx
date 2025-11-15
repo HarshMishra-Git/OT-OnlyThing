@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { PRODUCT_CATEGORIES, getProductsByCategory } from '../data/products';
-import { supabase } from '../lib/supabase';
+import { useQuery } from '@tanstack/react-query';
+import { ProductService } from '@/services/product.service';
+import { queryKeys } from '@/lib/react-query';
 
 interface CategoryCount {
   category: string;
@@ -9,32 +11,19 @@ interface CategoryCount {
 
 export function CategoryShowcase() {
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
-  
+
+  const { data } = useQuery({
+    queryKey: queryKeys.categories.counts,
+    queryFn: async () => {
+      const { data, error } = await ProductService.getCategoryCounts();
+      if (error) throw new Error(error);
+      return data;
+    },
+  });
+
   useEffect(() => {
-    async function fetchCategoryCounts() {
-      try {
-        const { data, error } = await supabase
-          .from('products')
-          .select('category')
-          .eq('is_active', true);
-        
-        if (error) throw error;
-        
-        // Count products per category
-        const counts: Record<string, number> = {};
-        data?.forEach((product) => {
-          const cat = product.category?.toLowerCase() || 'other';
-          counts[cat] = (counts[cat] || 0) + 1;
-        });
-        
-        setCategoryCounts(counts);
-      } catch (error) {
-        console.error('Error fetching category counts:', error);
-      }
-    }
-    
-    fetchCategoryCounts();
-  }, []);
+    if (data) setCategoryCounts(data);
+  }, [data]);
   
   return (
     <section className="py-24 bg-white">

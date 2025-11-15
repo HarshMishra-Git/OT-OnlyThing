@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useFeaturedProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import { Spinner } from '@/components/common/Spinner';
@@ -7,24 +8,30 @@ import { Card } from '@/components/common/Card';
 import { Badge } from '@/components/common/Badge';
 import HeroSection from '@/components/HeroSection';
 import TrustBar from '@/components/TrustBar';
-import FeaturedProducts from '@/components/FeaturedProducts';
-import CategoryShowcase from '@/components/CategoryShowcase';
 import { 
   ShoppingBag, 
-  Truck, 
-  Shield, 
-  Headphones,
   ArrowRight,
   Star,
-  Users,
-  Award,
-  TrendingUp
+  Package,
+  Check
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
+import { generateSEOTags, updateMetaTags } from '@/lib/seo';
 
 export default function HomePage() {
+  useEffect(() => {
+    const tags = generateSEOTags({
+      title: `${import.meta.env.VITE_APP_NAME || 'OnlyThing'} | Intelligent Skincare & Wellness`,
+      description: 'Science-backed skincare and wellness. Discover featured products and shop by category.',
+      keywords: 'skincare, wellness, science-backed, featured products, categories',
+      image: `${window.location.origin}/L.jpg`,
+      url: window.location.href,
+      type: 'website',
+    });
+    updateMetaTags(tags);
+  }, []);
   const { data: products, isLoading: productsLoading } = useFeaturedProducts();
   const { data: categories, isLoading: categoriesLoading } = useCategories();
   const { addToCart } = useCart();
@@ -38,87 +45,27 @@ export default function HomePage() {
     );
   }
 
-  const features = [
-    {
-      icon: Truck,
-      title: 'Free Shipping',
-      description: 'Free shipping on orders over ₹500',
-      color: 'text-blue-600',
-      bg: 'bg-blue-50',
-    },
-    {
-      icon: Shield,
-      title: 'Secure Payment',
-      description: '100% secure payment processing',
-      color: 'text-green-600',
-      bg: 'bg-green-50',
-    },
-    {
-      icon: Headphones,
-      title: '24/7 Support',
-      description: 'Dedicated customer support team',
-      color: 'text-purple-600',
-      bg: 'bg-purple-50',
-    },
-    {
-      icon: Award,
-      title: 'Quality Guarantee',
-      description: 'Premium quality products',
-      color: 'text-orange-600',
-      bg: 'bg-orange-50',
-    },
-  ];
-
-  const stats = [
-    { icon: Users, label: 'Happy Customers', value: '10,000+' },
-    { icon: ShoppingBag, label: 'Products Sold', value: '50,000+' },
-    { icon: Star, label: 'Average Rating', value: '4.8/5' },
-    { icon: TrendingUp, label: 'Growth Rate', value: '95%' },
-  ];
-
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-paper">
       {/* Hero Section */}
       <HeroSection />
 
-      {/* Trust Bar */}
-      <TrustBar />
+      
 
-      {/* Features Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <Card key={index} className="p-6 text-center hover:shadow-lg transition-shadow">
-                <div className={`${feature.bg} w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4`}>
-                  <feature.icon className={`w-8 h-8 ${feature.color}`} />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-sm text-gray-600">{feature.description}</p>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Products Section */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                Featured Products
-              </h2>
-              <p className="text-gray-600">
-                Discover our handpicked selection of premium products
-              </p>
-            </div>
-            <Link to="/shop">
-              <Button variant="outline">
+      {/* Featured Products Section (dark for contrast with Hero) */}
+      <section className="ink-section bg-black text-white">
+        <div className="container-custom">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-black mb-4 text-white">
+              Featured Products
+            </h2>
+            <p className="text-lg text-gray-200 max-w-2xl mx-auto">
+              Discover our handpicked selection of science-backed skincare solutions
+            </p>
+            <Link to="/shop" className="hidden md:inline-flex mt-6">
+              <Button variant="outline" className="group border-white text-white hover:bg-white hover:text-black">
                 View All
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
           </div>
@@ -126,25 +73,23 @@ export default function HomePage() {
           {products && products.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {products.slice(0, 8).map((product) => (
-                <Card key={product.id} hover className="overflow-hidden group">
+                <Card key={product.id} className="group overflow-hidden border-2 border-black rounded-none bg-white text-black">
                   <Link to={`/product/${product.slug}`}>
-                    <div className="relative aspect-square bg-gray-100 overflow-hidden">
+                    <div className="relative aspect-square bg-white overflow-hidden border-b-2 border-black">
                       {product.images && product.images[0] ? (
                         <img
                           src={product.images[0].image_url}
                           alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <ShoppingBag className="w-16 h-16 text-gray-300" />
+                        <div className="w-full h-full flex items-center justify-center bg-paper">
+                          <Package className="w-16 h-16 text-gray-300" />
                         </div>
                       )}
                       {product.compare_price && product.compare_price > product.price && (
-                        <Badge
-                          variant="error"
-                          className="absolute top-3 right-3"
-                        >
+                        <Badge className="absolute top-4 right-4 bg-black text-white border-2 border-black">
                           {Math.round(
                             ((product.compare_price - product.price) /
                               product.compare_price) *
@@ -153,38 +98,31 @@ export default function HomePage() {
                           % OFF
                         </Badge>
                       )}
-                      {product.is_featured && (
-                        <Badge
-                          variant="primary"
-                          className="absolute top-3 left-3"
-                        >
-                          Featured
-                        </Badge>
-                      )}
                     </div>
                   </Link>
 
-                  <div className="p-4">
+                  <div className="p-6 border-t-2 border-black bg-paper">
                     <Link to={`/product/${product.slug}`}>
-                      <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-primary-600 transition-colors">
+                      <h3 className="font-bold text-lg mb-2 line-clamp-2 hover:opacity-70 transition-opacity">
                         {product.name}
                       </h3>
                     </Link>
 
                     {product.short_description && (
-                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                      <p className="text-sm text-gray-600 mb-4 line-clamp-2">
                         {product.short_description}
                       </p>
                     )}
 
-                    <div className="flex items-center gap-2 mb-3">
+                    {/* Rating */}
+                    <div className="flex items-center gap-2 mb-4">
                       <div className="flex items-center">
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
                             className={`w-4 h-4 ${
                               i < Math.round(product.average_rating || 0)
-                                ? 'fill-yellow-400 text-yellow-400'
+                                ? 'fill-black text-black'
                                 : 'text-gray-300'
                             }`}
                           />
@@ -195,19 +133,19 @@ export default function HomePage() {
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <span className="text-xl font-bold text-gray-900">
-                          {formatCurrency(product.price)}
+                    {/* Price */}
+                    <div className="flex items-baseline gap-2 mb-4">
+                      <span className="text-2xl font-black">
+                        {formatCurrency(product.price)}
+                      </span>
+                      {product.compare_price && (
+                        <span className="text-sm text-gray-500 line-through">
+                          {formatCurrency(product.compare_price)}
                         </span>
-                        {product.compare_price && (
-                          <span className="text-sm text-gray-500 line-through ml-2">
-                            {formatCurrency(product.compare_price)}
-                          </span>
-                        )}
-                      </div>
+                      )}
                     </div>
 
+                    {/* Actions */}
                     <div className="flex gap-2">
                       <Button
                         size="sm"
@@ -224,7 +162,7 @@ export default function HomePage() {
                         <Star
                           className={`w-4 h-4 ${
                             isInWishlist(product.id)
-                              ? 'fill-red-500 text-red-500'
+                              ? 'fill-black text-black'
                               : ''
                           }`}
                         />
@@ -235,123 +173,105 @@ export default function HomePage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600">No featured products available</p>
-              <Link to="/shop" className="mt-4 inline-block">
+            <div className="text-center py-20 border-2 border-black bg-paper">
+              <ShoppingBag className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+              <p className="text-gray-600 mb-6">No featured products available</p>
+              <Link to="/shop">
                 <Button>Browse All Products</Button>
               </Link>
             </div>
           )}
+
+          {/* View All Button - Mobile */}
+          <div className="mt-12 text-center md:hidden">
+            <Link to="/shop">
+              <Button variant="outline" className="group border-white text-white hover:bg-white hover:text-black">
+                View All Products
+                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* Categories Section */}
-      {categories && categories.length > 0 && (
-        <section className="py-16 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                Shop by Category
+      {/* Why Choose Us Section with decorative imagery */}
+      <section className="ink-section bg-paper">
+        <div className="container-custom">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-black mb-4">
+                Why Choose Us
               </h2>
-              <p className="text-gray-600">
-                Explore our wide range of product categories
+              <p className="text-lg text-gray-600">
+                Science-backed solutions for your skin
               </p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {categories.slice(0, 8).map((category) => (
-                <Link
-                  key={category.id}
-                  to={`/shop?category=${category.id}`}
-                >
-                  <Card hover className="p-6 text-center">
-                    <div className="w-20 h-20 bg-gradient-to-br from-primary-50 to-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      {category.image_url ? (
-                        <img
-                          src={category.image_url}
-                          alt={category.name}
-                          className="w-12 h-12 object-cover"
-                        />
-                      ) : (
-                        <ShoppingBag className="w-10 h-10 text-primary-600" />
-                      )}
-                    </div>
-                    <h3 className="font-semibold text-gray-900">
-                      {category.name}
-                    </h3>
-                    {category.description && (
-                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                        {category.description}
-                      </p>
-                    )}
-                  </Card>
-                </Link>
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                {
+                  title: 'Clinically Proven',
+                  description: 'All products backed by scientific research and clinical trials',
+                },
+                {
+                  title: 'Personalized Care',
+                  description: 'Customized solutions based on your unique skin profile',
+                },
+                {
+                  title: 'Premium Quality',
+                  description: 'Only the highest quality ingredients and formulations',
+                },
+              ].map((item, index) => (
+                <div key={index} className="text-center">
+                  <div className="w-12 h-12 bg-black text-white flex items-center justify-center mx-auto mb-4 text-xl font-black">
+                    {index + 1}
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 uppercase tracking-wide">
+                    {item.title}
+                  </h3>
+                  <p className="text-gray-600">
+                    {item.description}
+                  </p>
+                </div>
               ))}
             </div>
           </div>
-        </section>
-      )}
 
-      {/* Stats Section */}
-      <section className="py-16 bg-gradient-to-br from-primary-600 to-primary-700 text-white">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <stat.icon className="w-12 h-12 mx-auto mb-4 opacity-80" />
-                <div className="text-3xl font-bold mb-2">{stat.value}</div>
-                <div className="text-primary-100">{stat.label}</div>
-              </div>
-            ))}
+          {/* Decorative image strip using unused hero images */}
+          <div className="mt-16">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {['/pic5.png','/pic6.png','/pic7.png','/pic8.png'].map((src) => (
+                <div key={src} className="aspect-square border-2 border-black overflow-hidden bg-white">
+                  <img src={src} alt="Decorative" loading="lazy" className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Newsletter Section */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <Card className="p-12 bg-gradient-to-r from-primary-50 to-blue-50">
-            <div className="max-w-2xl mx-auto text-center">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Subscribe to Our Newsletter
-              </h2>
-              <p className="text-gray-600 mb-8">
-                Get the latest updates on new products and exclusive offers
-              </p>
-              <form className="flex gap-3 max-w-md mx-auto">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-                <Button type="submit">Subscribe</Button>
-              </form>
-            </div>
-          </Card>
-        </div>
-      </section>
+      {/* Trust Bar moved below Why Choose Us */}
+      <TrustBar variant="dark" />
 
       {/* CTA Section */}
-      <section className="py-16 bg-gray-900 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">
-            Ready to Start Shopping?
+      <section className="ink-section bg-paper text-black">
+        <div className="container-custom text-center">
+          <h2 className="text-4xl md:text-5xl font-black mb-6">
+            Ready to Transform Your Skin?
           </h2>
-          <p className="text-gray-300 mb-8 max-w-2xl mx-auto">
-            Discover amazing products at unbeatable prices. Shop now and enjoy
-            free shipping on orders over ₹500!
+          <p className="text-xl text-gray-700 mb-8 max-w-2xl mx-auto">
+            Take our science-backed skin assessment and get personalized product recommendations
           </p>
-          <div className="flex gap-4 justify-center">
-            <Link to="/shop">
-              <Button size="lg">
-                Shop Now
-                <ArrowRight className="w-5 h-5 ml-2" />
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/quiz">
+              <Button size="lg" variant="secondary" className="min-w-[200px] group">
+                Take Assessment
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            <Link to="/about">
-              <Button size="lg" variant="outline">
-                Learn More
+            <Link to="/shop">
+              <Button size="lg" variant="outline" className="min-w-[200px] border-black text-black hover:bg-black hover:text-white">
+                Browse Products
               </Button>
             </Link>
           </div>

@@ -116,13 +116,29 @@ export const AuthService = {
 
   async resetPassword(email: string) {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
       if (error) {
         return { error: error.message };
       }
       return { error: null };
     } catch (error: any) {
       return { error: error.message };
+    }
+  },
+
+  async updatePassword(newPassword: string) {
+    try {
+      // When arriving from the recovery email, Supabase provides a temporary session.
+      // updateUser will apply the new password for the current user in that session.
+      const { data, error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        return { data: null, error: error.message };
+      }
+      return { data, error: null };
+    } catch (error: any) {
+      return { data: null, error: error.message };
     }
   },
 };

@@ -42,6 +42,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
             <img
               src={images[selectedIndex]}
               alt={`${productName} - Image ${selectedIndex + 1}`}
+              loading="lazy"
               className="w-full h-full object-cover transition-transform duration-300"
               style={{
                 transform: isZoomed ? `scale(2)` : 'scale(1)',
@@ -108,6 +109,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                 <img
                   src={image}
                   alt={`${productName} - Thumbnail ${index + 1}`}
+                  loading="lazy"
                   className="w-full h-full object-cover"
                 />
               </button>
@@ -144,6 +146,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
             <img
               src={images[selectedIndex]}
               alt={`${productName} - Image ${selectedIndex + 1}`}
+              loading="lazy"
               className="w-full h-full object-contain"
             />
           </div>
@@ -165,7 +168,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                     : 'border-white/30 hover:border-white/60'
                 }`}
               >
-                <img src={image} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                <img src={image} alt={`Thumbnail ${index + 1}`} loading="lazy" className="w-full h-full object-cover" />
               </button>
             ))}
           </div>

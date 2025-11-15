@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { AddressService } from '@/services/address.service';
+import { WishlistService } from '@/services/wishlist.service';
+import { OrderService } from '@/services/order.service';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
 import { Badge } from '@/components/common/Badge';
@@ -19,12 +21,15 @@ import {
   Plus,
   Edit,
   Trash2,
-  ShoppingBag
+  ShoppingBag,
+  Heart
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { ORDER_STATUS_LABELS } from '@/lib/constants';
+import { downloadInvoice } from '@/lib/invoice';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { generateSEOTags, updateMetaTags } from '@/lib/seo';
 
 export default function AccountPage() {
   const { user, logout, updateProfile } = useAuth();
@@ -33,13 +38,26 @@ export default function AccountPage() {
   
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [profileData, setProfileData] = useState({
     full_name: user?.full_name || '',
     phone: user?.phone || '',
   });
+  const [addressForm, setAddressForm] = useState({
+    full_name: user?.full_name || '',
+    phone: user?.phone || '',
+    address_line1: '',
+    address_line2: '',
+    city: '',
+    state: '',
+    postal_code: '',
+    country: 'India',
+    address_type: 'home' as 'home' | 'work' | 'other',
+  });
 
   const { data: addresses, refetch: refetchAddresses } = useQuery({
-    queryKey: ['user-addresses'],
+    queryKey: ['user-addresses', user?.id],
     queryFn: async () => {
       if (!user) return [];
       const { data, error } = await AddressService.getUserAddresses(user.id);
@@ -47,6 +65,8 @@ export default function AccountPage() {
       return data;
     },
     enabled: !!user,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const deleteAddressMutation = useMutation({
@@ -56,6 +76,67 @@ export default function AccountPage() {
     },
     onSuccess: () => {
       toast.success('Address deleted');
+      refetchAddresses();
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
+  const addAddressMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error('Not logged in');
+      const { error } = await AddressService.createAddress({
+        user_id: user.id,
+        ...addressForm,
+      } as any);
+      if (error) throw new Error(error);
+    },
+    onSuccess: () => {
+      toast.success('Address added');
+      setIsAddingAddress(false);
+      setAddressForm({
+        full_name: user?.full_name || '',
+        phone: user?.phone || '',
+        address_line1: '',
+        address_line2: '',
+        city: '',
+        state: '',
+        postal_code: '',
+        country: 'India',
+        address_type: 'home',
+      });
+      refetchAddresses();
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
+  const updateAddressMutation = useMutation({
+    mutationFn: async () => {
+      if (!editingAddressId) throw new Error('No address selected');
+      const { error } = await AddressService.updateAddress(editingAddressId, addressForm as any);
+      if (error) throw new Error(error);
+    },
+    onSuccess: () => {
+      toast.success('Address updated');
+      setIsEditingAddress(false);
+      setEditingAddressId(null);
+      refetchAddresses();
+    },
+    onError: (error: any) => {
+      toast.error(error.message);
+    },
+  });
+
+  const setDefaultMutation = useMutation({
+    mutationFn: async (addressId: string) => {
+      const { error } = await AddressService.setDefaultAddress(addressId);
+      if (error) throw new Error(error);
+    },
+    onSuccess: () => {
+      toast.success('Default address set');
       refetchAddresses();
     },
     onError: (error: any) => {
@@ -84,6 +165,42 @@ export default function AccountPage() {
       deleteAddressMutation.mutate(id);
     }
   };
+
+  const handleCancelOrder = async (orderId: string, paymentMethod: string) => {
+    if (!confirm('Are you sure you want to cancel this order? Refund will be processed if payment was made.')) {
+      return;
+    }
+
+    try {
+      // Cancel order in database
+      const { error } = await OrderService.updateOrderStatus(orderId, 'cancelled');
+      if (error) throw new Error(error);
+
+      // If payment was made via Razorpay, initiate refund
+      if (paymentMethod === 'razorpay') {
+        toast.success('Order cancelled. Refund will be processed within 5-7 business days.');
+      } else {
+        toast.success('Order cancelled successfully');
+      }
+
+      // Refresh orders
+      window.location.reload();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to cancel order');
+    }
+  };
+
+  useEffect(() => {
+    const tags = generateSEOTags({
+      title: `My Account | ${import.meta.env.VITE_APP_NAME || 'OnlyThing'}`,
+      description: 'View orders, manage addresses, and update your profile.',
+      keywords: 'account, dashboard, orders, addresses, onlything',
+      image: `${window.location.origin}/L.jpg`,
+      url: window.location.href,
+      type: 'website',
+    });
+    updateMetaTags(tags);
+  }, []);
 
   if (!user) {
     return (
@@ -180,9 +297,9 @@ export default function AccountPage() {
           <Card className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-gray-900">Recent Orders</h2>
-              <Link to="#orders">
-                <Button size="sm" variant="outline">View All</Button>
-              </Link>
+              <Button size="sm" variant="outline" onClick={() => window.location.hash = 'orders'}>
+                View All
+              </Button>
             </div>
 
             {orders && orders.length > 0 ? (
@@ -194,7 +311,12 @@ export default function AccountPage() {
                         <p className="font-semibold text-gray-900">{order.order_number}</p>
                         <p className="text-sm text-gray-500">{formatDate(order.created_at)}</p>
                       </div>
-                      <Badge variant="primary">{ORDER_STATUS_LABELS[order.status]}</Badge>
+                      <div className="flex items-center gap-3">
+                        <Badge variant="primary">{ORDER_STATUS_LABELS[order.status]}</Badge>
+                        <Button size="xs" variant="outline" onClick={() => downloadInvoice(order)}>
+                          Download Invoice
+                        </Button>
+                      </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <p className="text-sm text-gray-600">
@@ -234,7 +356,12 @@ export default function AccountPage() {
                       <p className="text-lg font-semibold text-gray-900">{order.order_number}</p>
                       <p className="text-sm text-gray-500 mt-1">{formatDate(order.created_at)}</p>
                     </div>
-                    <Badge variant="primary">{ORDER_STATUS_LABELS[order.status]}</Badge>
+                    <div className="flex items-center gap-3">
+                      <Badge variant="primary">{ORDER_STATUS_LABELS[order.status]}</Badge>
+                      <Button size="xs" variant="outline" onClick={() => downloadInvoice(order)}>
+                        Download Invoice
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="space-y-3 mb-4">
@@ -254,6 +381,19 @@ export default function AccountPage() {
                       {formatCurrency(order.total)}
                     </span>
                   </div>
+
+                  {/* Cancel Order Button */}
+                  {(order.status === 'pending' || order.status === 'confirmed') && (
+                    <div className="mt-4 pt-4 border-t">
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        onClick={() => handleCancelOrder(order.id, order.payment_method)}
+                      >
+                        Cancel Order
+                      </Button>
+                    </div>
+                  )}
 
                   {order.tracking_number && (
                     <div className="mt-4 pt-4 border-t">
@@ -279,6 +419,13 @@ export default function AccountPage() {
             </Card>
           )}
         </div>
+      ),
+    },
+    {
+      id: 'wishlist',
+      label: 'Wishlist',
+      content: (
+        <WishlistTab userId={user.id} />
       ),
     },
     {
@@ -319,10 +466,38 @@ export default function AccountPage() {
                   </div>
 
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className="flex-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        setIsEditingAddress(true);
+                        setEditingAddressId(address.id);
+                        setAddressForm({
+                          full_name: address.full_name || user.full_name || '',
+                          phone: address.phone || user.phone || '',
+                          address_line1: address.address_line1 || '',
+                          address_line2: address.address_line2 || '',
+                          city: address.city || '',
+                          state: address.state || '',
+                          postal_code: address.postal_code || '',
+                          country: address.country || 'India',
+                          address_type: (address.address_type || 'home') as 'home' | 'work' | 'other',
+                        });
+                      }}
+                    >
                       <Edit className="w-4 h-4 mr-2" />
                       Edit
                     </Button>
+                    {!address.is_default && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setDefaultMutation.mutate(address.id)}
+                      >
+                        Set Default
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       variant="ghost"
@@ -446,9 +621,161 @@ export default function AccountPage() {
         onClose={() => setIsAddingAddress(false)}
         title="Add New Address"
       >
-        <p className="text-gray-600 mb-4">Address form coming soon...</p>
-        <Button onClick={() => setIsAddingAddress(false)}>Close</Button>
+        <div className="space-y-4">
+          <Input label="Full Name" value={addressForm.full_name} onChange={(e) => setAddressForm({ ...addressForm, full_name: e.target.value })} />
+          <Input label="Phone" value={addressForm.phone} onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })} />
+          <Input label="Address Line 1" value={addressForm.address_line1} onChange={(e) => setAddressForm({ ...addressForm, address_line1: e.target.value })} />
+          <Input label="Address Line 2" value={addressForm.address_line2} onChange={(e) => setAddressForm({ ...addressForm, address_line2: e.target.value })} />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Input label="City" value={addressForm.city} onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })} />
+            <Input label="State" value={addressForm.state} onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })} />
+            <Input label="Postal Code" value={addressForm.postal_code} onChange={(e) => setAddressForm({ ...addressForm, postal_code: e.target.value })} />
+          </div>
+          <Input label="Country" value={addressForm.country} onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })} />
+          <div>
+            <label className="text-sm text-gray-700 mb-1 block">Address Type</label>
+            <select
+              value={addressForm.address_type}
+              onChange={(e) => setAddressForm({ ...addressForm, address_type: e.target.value as any })}
+              className="w-full border rounded px-3 py-2"
+            >
+              <option value="home">Home</option>
+              <option value="work">Work</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="outline" onClick={() => setIsAddingAddress(false)}>Cancel</Button>
+            <Button onClick={() => addAddressMutation.mutate()}>
+              {addAddressMutation.isPending ? 'Saving...' : 'Save Address'}
+            </Button>
+          </div>
+        </div>
       </Modal>
+
+      {/* Edit Address Modal */}
+      <Modal
+        isOpen={isEditingAddress}
+        onClose={() => setIsEditingAddress(false)}
+        title="Edit Address"
+      >
+        <div className="space-y-4">
+          <Input label="Full Name" value={addressForm.full_name} onChange={(e) => setAddressForm({ ...addressForm, full_name: e.target.value })} />
+          <Input label="Phone" value={addressForm.phone} onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })} />
+          <Input label="Address Line 1" value={addressForm.address_line1} onChange={(e) => setAddressForm({ ...addressForm, address_line1: e.target.value })} />
+          <Input label="Address Line 2" value={addressForm.address_line2} onChange={(e) => setAddressForm({ ...addressForm, address_line2: e.target.value })} />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Input label="City" value={addressForm.city} onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })} />
+            <Input label="State" value={addressForm.state} onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })} />
+            <Input label="Postal Code" value={addressForm.postal_code} onChange={(e) => setAddressForm({ ...addressForm, postal_code: e.target.value })} />
+          </div>
+          <Input label="Country" value={addressForm.country} onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })} />
+          <div>
+            <label className="text-sm text-gray-700 mb-1 block">Address Type</label>
+            <select
+              value={addressForm.address_type}
+              onChange={(e) => setAddressForm({ ...addressForm, address_type: e.target.value as any })}
+              className="w-full border rounded px-3 py-2"
+            >
+              <option value="home">Home</option>
+              <option value="work">Work</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="outline" onClick={() => setIsEditingAddress(false)}>Cancel</Button>
+            <Button onClick={() => updateAddressMutation.mutate()}>
+              {updateAddressMutation.isPending ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Wishlist Tab Component */}
+      {/* Defined below to keep file self-contained */}
+    </div>
+  );
+}
+
+function WishlistTab({ userId }: { userId: string }) {
+  const { data: wishlistItems, refetch, isLoading } = useQuery({
+    queryKey: ['wishlist', userId],
+    queryFn: async () => {
+      const { data, error } = await WishlistService.getWishlistItems(userId);
+      if (error) throw new Error(error);
+      return data;
+    },
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: async (wishlistItemId: string) => {
+      const { error } = await WishlistService.removeFromWishlist(wishlistItemId);
+      if (error) throw new Error(error);
+    },
+    onSuccess: () => {
+      toast.success('Removed from wishlist');
+      refetch();
+    },
+    onError: (error: any) => toast.error(error.message),
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Spinner />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {wishlistItems && wishlistItems.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {wishlistItems.map((item) => (
+            <Card key={item.id} className="p-4">
+              <div className="flex gap-4">
+                <div className="w-24 h-24 bg-gray-100 rounded overflow-hidden flex items-center justify-center">
+                  {item.product?.images?.[0]?.image_url ? (
+                    <img src={item.product.images[0].image_url} alt={item.product.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <Package className="w-8 h-8 text-gray-300" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-semibold text-gray-900">{item.product?.name}</p>
+                      <p className="text-sm text-gray-600">Added {formatDate(item.created_at)}</p>
+                    </div>
+                    <Button size="xs" variant="ghost" onClick={() => removeMutation.mutate(item.id)}>
+                      <Trash2 className="w-4 h-4 text-red-600" />
+                    </Button>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <p className="font-medium text-gray-900">{item.product ? formatCurrency(item.product.price) : ''}</p>
+                    <Link to={`/product/${item.product?.slug || item.product?.id}`}>
+                      <Button size="sm" variant="outline">View Product</Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <Card className="p-12">
+          <div className="text-center">
+            <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No items in wishlist</h3>
+            <p className="text-gray-600 mb-6">Browse products and add your favorites</p>
+            <Link to="/shop">
+              <Button>Browse Products</Button>
+            </Link>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

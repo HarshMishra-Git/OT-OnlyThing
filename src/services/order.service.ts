@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import type { Order, OrderWithItems, OrderFilters, CreateOrderDTO } from '@/types';
 import { generateOrderNumber } from '@/lib/utils';
+import { calcTax, calcShipping } from '@/lib/totals';
 
 export const OrderService = {
   // Create order
@@ -10,8 +11,8 @@ export const OrderService = {
 
       // Calculate totals
       const subtotal = orderData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      const tax = subtotal * 0.18; // 18% tax
-      const shipping = subtotal >= 500 ? 0 : 50;
+      const tax = calcTax(subtotal);
+      const shipping = calcShipping(subtotal);
       const total = subtotal + tax + shipping;
 
       // Get shipping address
@@ -21,7 +22,7 @@ export const OrderService = {
         .eq('id', orderData.shipping_address_id)
         .single();
 
-      // Create order
+      // Create order with confirmed status for online payments
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -37,18 +38,28 @@ export const OrderService = {
           shipping_address: `${address?.address_line1}, ${address?.city}, ${address?.state} ${address?.postal_code}`,
           customer_notes: orderData.customer_notes,
           payment_method: orderData.payment_method,
+          status: orderData.payment_method === 'razorpay' ? 'confirmed' : 'pending',
         })
         .select()
         .single();
 
       if (orderError) throw orderError;
 
+      // Get product names for order items
+      const productIds = orderData.items.map(item => item.product_id);
+      const { data: products } = await supabase
+        .from('products')
+        .select('id, name')
+        .in('id', productIds);
+
+      const productMap = new Map(products?.map(p => [p.id, p.name]) || []);
+
       // Create order items
       const orderItems = orderData.items.map(item => ({
         order_id: order.id,
         product_id: item.product_id,
         variant_id: item.variant_id || null,
-        product_name: '', // Will be filled by trigger or separate query
+        product_name: productMap.get(item.product_id) || 'Unknown Product',
         price: item.price,
         quantity: item.quantity,
         subtotal: item.price * item.quantity,
@@ -94,7 +105,7 @@ export const OrderService = {
         .select(`
           *,
           items:order_items(*),
-          user:profiles(*)
+          profiles!user_id(full_name,email,phone)
         `)
         .eq('id', orderId)
         .single();
@@ -135,7 +146,7 @@ export const OrderService = {
         .select(`
           *,
           items:order_items(*),
-          user:profiles(*)
+          profiles!user_id(full_name,email,phone)
         `, { count: 'exact' });
 
       if (filters?.status) {
@@ -175,7 +186,7 @@ export const OrderService = {
     }
   },
 
-  // ADMIN: Update order status
+  // Update order status (users can cancel their own orders)
   async updateOrderStatus(orderId: string, status: string) {
     try {
       const updates: any = { status };

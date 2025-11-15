@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from 'react';
-import { supabase } from '../lib/supabase';
+import { useEffect, useState, useRef, useMemo } from 'react';
+import { useFeaturedProducts } from '@/hooks/useProducts';
 import { PRODUCT_CATALOG } from '../data/products';
 
 interface Product {
@@ -18,25 +18,26 @@ export function ProductSpotlight() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
+  const { data } = useFeaturedProducts(4);
+  const mapped = useMemo(
+    () =>
+      (data || []).map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        price: p.price,
+        image_url: p.images?.[0]?.image_url ?? '',
+        category: p.category?.name,
+        description: p.short_description ?? '',
+      })),
+    [data]
+  );
+
   useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const { data } = await supabase
-          .from('products')
-          .select('id, name, slug, price, image_url, category')
-          .eq('is_active', true)
-          .limit(4);
-        
-        if (data && data.length > 0) {
-          setProducts(data);
-        }
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      }
+    if (mapped.length > 0) {
+      setProducts(mapped);
     }
-    
-    fetchProducts();
-  }, []);
+  }, [mapped]);
 
   // Auto-play carousel
   useEffect(() => {

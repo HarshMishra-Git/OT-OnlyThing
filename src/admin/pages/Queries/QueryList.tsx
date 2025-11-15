@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Search, Filter, MessageSquare, Clock, CheckCircle, 
   XCircle, AlertCircle, Mail, Phone, Calendar 
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { QueryService } from '@/services/query.service';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { Spinner } from '@/components/common/Spinner';
@@ -42,84 +43,53 @@ const priorityConfig = {
 };
 
 export function QueryList() {
-  const [queries, setQueries] = useState<Query[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
-
-  useEffect(() => {
-    loadQueries();
-    
-    // Set up real-time subscription
-    const subscription = supabase
-      .channel('queries_channel')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'customer_queries' },
-        (payload) => {
-          loadQueries();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  const loadQueries = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('customer_queries')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setQueries(data || []);
-    } catch (error) {
-      toast.error('Failed to load queries');
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateQueryStatus = async (queryId: string, status: string) => {
-    try {
-      const { error } = await supabase
-        .from('customer_queries')
-        .update({ status, updated_at: new Date().toISOString() })
-        .eq('id', queryId);
-
-      if (error) throw error;
-      toast.success('Status updated successfully');
-      loadQueries();
-    } catch (error) {
-      toast.error('Failed to update status');
-    }
-  };
-
-  const filteredQueries = queries.filter(query => {
-    const matchesSearch = 
-      query.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      query.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      query.subject.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = filterStatus === 'all' || query.status === filterStatus;
-    const matchesPriority = filterPriority === 'all' || query.priority === filterPriority;
-    
-    return matchesSearch && matchesStatus && matchesPriority;
+  const { data: queriesData, isLoading, refetch } = useQuery({
+    queryKey: ['admin-queries'],
+    queryFn: async () => {
+      const { data, error } = await QueryService.getAllQueries();
+      if (error) throw new Error(error);
+      return data as any as Query[];
+    },
   });
 
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ queryId, status }: { queryId: string; status: string }) => {
+      const { error } = await QueryService.updateQueryStatus(queryId, status);
+      if (error) throw new Error(error);
+    },
+    onSuccess: () => {
+      toast.success('Status updated successfully');
+      refetch();
+    },
+    onError: () => {
+      toast.error('Failed to update status');
+    },
+  });
+
+  const filteredQueries = useMemo(() => {
+    const queries = queriesData || [];
+    const matchesSearch = (q: Query) =>
+      q.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      q.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      q.subject.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = (q: Query) => filterStatus === 'all' || q.status === filterStatus;
+    const matchesPriority = (q: Query) => filterPriority === 'all' || q.priority === filterPriority;
+    
+    return queries.filter((q) => matchesSearch(q) && matchesStatus(q) && matchesPriority(q));
+  }, [queriesData, searchTerm, filterStatus, filterPriority]);
+
   const stats = {
-    total: queries.length,
-    open: queries.filter(q => q.status === 'open').length,
-    in_progress: queries.filter(q => q.status === 'in_progress').length,
-    resolved: queries.filter(q => q.status === 'resolved').length,
+    total: queriesData?.length || 0,
+    open: queriesData?.filter(q => q.status === 'open').length || 0,
+    in_progress: queriesData?.filter(q => q.status === 'in_progress').length || 0,
+    resolved: queriesData?.filter(q => q.status === 'resolved').length || 0,
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <Spinner size="lg" />
@@ -283,7 +253,7 @@ export function QueryList() {
                         value={query.status}
                         onChange={(e) => {
                           e.preventDefault();
-                          updateQueryStatus(query.id, e.target.value);
+                          updateStatusMutation.mutate({ queryId: query.id, status: e.target.value });
                         }}
                         onClick={(e) => e.stopPropagation()}
                         className={`px-3 py-1 rounded-full text-sm font-medium border-2 cursor-pointer

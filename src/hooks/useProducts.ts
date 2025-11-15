@@ -26,13 +26,45 @@ export const useProduct = (slug: string) => {
   });
 };
 
-export const useFeaturedProducts = () => {
+export const useFeaturedProducts = (limit?: number) => {
   return useQuery({
-    queryKey: queryKeys.products.featured,
+    queryKey: queryKeys.products.featured(limit),
     queryFn: async () => {
-      const { data, error } = await ProductService.getFeaturedProducts();
+      const { data, error } = await ProductService.getFeaturedProducts(limit);
       if (error) throw new Error(error);
       return data;
     },
+  });
+};
+
+export const useProductSearch = (query: string) => {
+  return useQuery({
+    queryKey: queryKeys.products.search(query),
+    queryFn: async () => {
+      const { data, error } = await ProductService.searchProducts(query);
+      if (error) throw new Error(error);
+      return data;
+    },
+    enabled: query.length >= 2,
+  });
+};
+
+export const useRelatedProducts = (
+  categoryId: string,
+  excludeProductId?: string,
+  limit?: number
+) => {
+  return useQuery({
+    queryKey: queryKeys.products.related(categoryId, excludeProductId, limit),
+    queryFn: async () => {
+      const { data, error } = await ProductService.getRelatedProducts(
+        categoryId,
+        excludeProductId,
+        limit
+      );
+      if (error) throw new Error(error);
+      return data;
+    },
+    enabled: !!categoryId,
   });
 };

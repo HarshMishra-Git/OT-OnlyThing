@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '../components/Button';
 import { Trash2, Heart, Tag, Truck, ShieldCheck, Clock, X } from 'lucide-react';
+import { calcShipping, calcTax, FREE_SHIPPING_THRESHOLD, TAX_RATE } from '@/lib/totals';
 
 interface CartItem {
   id: string;
@@ -123,8 +124,9 @@ export function EnhancedCartPage() {
   );
 
   const discount = appliedCoupon ? (subtotal * appliedCoupon.discount) / 100 : 0;
-  const shipping = subtotal > 999 ? 0 : 99;
-  const total = subtotal - discount + shipping;
+  const tax = calcTax(subtotal);
+  const shipping = calcShipping(subtotal);
+  const total = subtotal - discount + tax + shipping;
 
   if (loading) {
     return (
@@ -337,14 +339,18 @@ export function EnhancedCartPage() {
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Tax ({(TAX_RATE * 100).toFixed(0)}% GST)</span>
+                    <span className="font-bold">₹{tax.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Shipping</span>
                     <span className="font-bold">
                       {shipping === 0 ? 'FREE' : `₹${shipping.toFixed(2)}`}
                     </span>
                   </div>
-                  {subtotal < 999 && (
+                  {subtotal < FREE_SHIPPING_THRESHOLD && (
                     <p className="text-xs text-gray-500">
-                      Add ₹{(999 - subtotal).toFixed(2)} more for free shipping!
+                      Add ₹{(FREE_SHIPPING_THRESHOLD - subtotal).toFixed(2)} more for free shipping!
                     </p>
                   )}
                 </div>

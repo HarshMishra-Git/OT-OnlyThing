@@ -33,9 +33,7 @@ export function BlogEditor() {
   const isEdit = Boolean(id);
 
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [featuredImage, setFeaturedImage] = useState<string>('');
-  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const {
     register,
@@ -103,8 +101,11 @@ export function BlogEditor() {
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImageFile(file);
-      setFeaturedImage(URL.createObjectURL(file));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFeaturedImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -113,13 +114,6 @@ export function BlogEditor() {
       setLoading(true);
 
       let uploadedImageUrl = featuredImage;
-
-      // Upload featured image if new file selected
-      if (imageFile) {
-        setUploading(true);
-        const { url } = await StorageService.uploadFile(imageFile, 'blog');
-        uploadedImageUrl = url;
-      }
 
       const postData = {
         ...data,
@@ -156,7 +150,6 @@ export function BlogEditor() {
       toast.error(error.message || 'Failed to save post');
     } finally {
       setLoading(false);
-      setUploading(false);
     }
   };
 
@@ -369,12 +362,12 @@ export function BlogEditor() {
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={loading || uploading}
+                    disabled={loading}
                   >
-                    {loading || uploading ? (
+                    {loading ? (
                       <>
                         <Spinner size="sm" className="mr-2" />
-                        {uploading ? 'Uploading...' : 'Saving...'}
+                        Saving...
                       </>
                     ) : (
                       <>

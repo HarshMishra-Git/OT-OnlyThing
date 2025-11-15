@@ -39,11 +39,13 @@ export function ProductList() {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const data = await ProductService.getAllProducts();
-      setProducts(data);
+      const { data, error } = await ProductService.getAllProducts();
+      if (error) throw new Error(error);
+      setProducts(data || []);
     } catch (error) {
       toast.error('Failed to load products');
       console.error(error);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -82,7 +84,7 @@ export function ProductList() {
     }
   };
 
-  const filteredProducts = products.filter(product => {
+  const filteredProducts = (products || []).filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.slug.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filterCategory === 'all' || product.category?.name === filterCategory;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +10,7 @@ import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { Spinner } from '@/components/common/Spinner';
 import toast from 'react-hot-toast';
+import { generateSEOTags, updateMetaTags } from '@/lib/seo';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -22,6 +23,18 @@ export function LoginPage() {
   const navigate = useNavigate();
   const { signIn } = useAuthStore();
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const tags = generateSEOTags({
+      title: `Login | ${import.meta.env.VITE_APP_NAME || 'OnlyThing'}`,
+      description: 'Sign in to access your account, orders, and wishlist.',
+      keywords: 'login, sign in, account, onlything',
+      image: `${window.location.origin}/L.jpg`,
+      url: window.location.href,
+      type: 'website',
+    });
+    updateMetaTags(tags);
+  }, []);
 
   const {
     register,
@@ -42,7 +55,9 @@ export function LoginPage() {
       }
 
       toast.success('Welcome back!');
-      navigate('/');
+      // Clean URL by replacing instead of pushing
+      window.history.replaceState({}, '', '/');
+      navigate('/', { replace: true });
     } catch (error: any) {
       toast.error(error.message || 'Failed to sign in');
     } finally {

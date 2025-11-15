@@ -78,7 +78,7 @@ export const StorageService = {
 
   // Upload blog image
   async uploadBlogImage(file: File) {
-    return this.uploadImage(STORAGE_BUCKETS.BLOG, file, 'blog');
+    return this.uploadImage(STORAGE_BUCKETS.PRODUCTS, file, 'blog');
   },
 
   // Upload avatar

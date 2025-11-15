@@ -120,6 +120,54 @@ export const ProductService = {
     }
   },
 
+  // Get related products by category, excluding current product
+  async getRelatedProducts(categoryId: string, excludeProductId?: string, limit: number = 8) {
+    try {
+      let query = supabase
+        .from('products')
+        .select(`
+          *,
+          images:product_images(*)
+        `)
+        .eq('is_active', true)
+        .eq('category_id', categoryId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (excludeProductId) {
+        query = query.neq('id', excludeProductId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return { data: data as Product[], error: null };
+    } catch (error: any) {
+      return { data: [], error: error.message };
+    }
+  },
+
+  // Compute counts per category (client-side aggregation)
+  async getCategoryCounts() {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('category_id')
+        .eq('is_active', true);
+
+      if (error) throw error;
+
+      const counts: Record<string, number> = {};
+      (data || []).forEach((row: any) => {
+        const key = row.category_id || 'unknown';
+        counts[key] = (counts[key] || 0) + 1;
+      });
+
+      return { data: counts, error: null };
+    } catch (error: any) {
+      return { data: {}, error: error.message };
+    }
+  },
+
   // Get products by category
   async getProductsByCategory(categoryId: string) {
     try {
@@ -144,15 +192,33 @@ export const ProductService = {
   // Search products
   async searchProducts(searchTerm: string) {
     try {
-      const { data, error } = await supabase
+      const term = (searchTerm || '').trim();
+
+      let query = supabase
         .from('products')
         .select(`
           *,
           images:product_images(*)
         `)
-        .or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
         .eq('is_active', true)
         .limit(20);
+
+      if (term.length >= 3) {
+        // Full-text search on tsvector with websearch syntax
+        // Requires migration adding products.search_document
+        query = query.textSearch('search_document', term, {
+          type: 'websearch',
+          config: 'english',
+        });
+      } else if (term.length > 0) {
+        // Fast prefix/trigram match for short queries
+        const prefix = term.replace('%', '').replace('_', '');
+        query = query.or(
+          `name.ilike.${prefix}%,sku.ilike.${prefix}%`
+        );
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -321,6 +387,32 @@ export const ProductService = {
       return { data: data as Product[], count: count || 0, error: null };
     } catch (error: any) {
       return { data: [], count: 0, error: error.message };
+    }
+  },
+
+  // ADMIN: Get product statistics
+  async getProductStats() {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('is_active, is_featured, stock_quantity, low_stock_threshold');
+
+      if (error) throw error;
+
+      const stats = {
+        total: data.length,
+        active: data.filter((p: any) => p.is_active).length,
+        featured: data.filter((p: any) => p.is_featured).length,
+        low_stock: data.filter((p: any) => {
+          const qty = Number(p.stock_quantity || 0);
+          const threshold = Number(p.low_stock_threshold || 0);
+          return threshold > 0 && qty <= threshold;
+        }).length,
+      };
+
+      return { data: stats, error: null };
+    } catch (error: any) {
+      return { data: null, error: error.message };
     }
   },
 };

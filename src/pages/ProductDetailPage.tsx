@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useProduct } from '@/hooks/useProducts';
+import { useProduct, useRelatedProducts } from '@/hooks/useProducts';
 import { useReviews } from '@/hooks/useReviews';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
@@ -11,6 +11,7 @@ import { Rating } from '@/components/common/Rating';
 import { Card } from '@/components/common/Card';
 import { Badge } from '@/components/common/Badge';
 import { Tabs } from '@/components/common/Tabs';
+import { ShareButtons } from '@/components/common/ShareButtons';
 import { formatCurrency, calculateDiscount, isInStock, isLowStock } from '@/lib/utils';
 import { 
   Heart, 
@@ -24,17 +25,59 @@ import {
   Package
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { generateSEOTags, updateMetaTags } from '@/lib/seo';
 
 export default function ProductDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const { data: product, isLoading } = useProduct(id || '');
+  const { slug } = useParams<{ slug: string }>();
+  const { data: product, isLoading } = useProduct(slug || '');
   const { data: reviews } = useReviews(product?.id || '');
+  const [reviewsSort, setReviewsSort] = useState<'newest' | 'highest' | 'lowest'>('newest');
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { isAuthenticated } = useAuth();
   
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedVariantId, setSelectedVariantId] = useState<string | undefined>(undefined);
+  const { data: related } = useRelatedProducts(
+    product?.category?.id || '',
+    product?.id || '',
+    8
+  );
+
+  const selectedVariant = useMemo(() => {
+    const variants = (product as any)?.variants as Array<any> | undefined;
+    if (!variants || variants.length === 0) return undefined;
+    return variants.find((v) => v.id === selectedVariantId);
+  }, [product, selectedVariantId]);
+
+  const effectivePrice = useMemo(() => {
+    if (selectedVariant && typeof selectedVariant.price === 'number' && selectedVariant.price > 0) {
+      return selectedVariant.price as number;
+    }
+    return product?.price || 0;
+  }, [selectedVariant, product]);
+
+  const availableStock = useMemo(() => {
+    if (selectedVariant && typeof selectedVariant.stock_quantity === 'number') {
+      return selectedVariant.stock_quantity as number;
+    }
+    return product?.stock_quantity || 0;
+  }, [selectedVariant, product]);
+
+  useEffect(() => {
+    if (!product) return;
+    const image = product.images?.[0]?.image_url;
+    const tags = generateSEOTags({
+      title: `${product.name} | ${import.meta.env.VITE_APP_NAME || 'OnlyThing'}`,
+      description: product.meta_description || product.short_description || product.description?.slice(0, 160) || 'Explore product details, reviews, and related items.',
+      keywords: `${product.name}, skincare, wellness, product` ,
+      image: image || `${window.location.origin}/L.jpg`,
+      url: window.location.href,
+      type: 'product',
+    });
+    updateMetaTags(tags);
+  }, [product]);
 
   if (isLoading) {
     return (
@@ -68,11 +111,15 @@ export default function ProductDetailPage() {
     : 0;
 
   const handleAddToCart = () => {
-    if (!isInStock(product.stock_quantity)) {
+    if (!isInStock(availableStock)) {
       toast.error('Product is out of stock');
       return;
     }
-    addToCart(product, quantity);
+    const productWithImages = {
+      ...product,
+      images: product.images || [],
+    };
+    addToCart(productWithImages, quantity, selectedVariantId);
   };
 
   const handleBuyNow = () => {
@@ -81,20 +128,28 @@ export default function ProductDetailPage() {
       window.location.href = '/login';
       return;
     }
-    if (!isInStock(product.stock_quantity)) {
+    if (!isInStock(availableStock)) {
       toast.error('Product is out of stock');
       return;
     }
-    addToCart(product, quantity);
+    const productWithImages = {
+      ...product,
+      images: product.images || [],
+    };
+    addToCart(productWithImages, quantity, selectedVariantId);
     window.location.href = '/checkout';
   };
 
   const handleToggleWishlist = () => {
-    toggleWishlist(product);
+    const productWithImages = {
+      ...product,
+      images: product.images || [],
+    };
+    toggleWishlist(productWithImages);
   };
 
   const incrementQuantity = () => {
-    if (quantity < product.stock_quantity) {
+    if (quantity < availableStock) {
       setQuantity(quantity + 1);
     }
   };
@@ -144,36 +199,64 @@ export default function ProductDetailPage() {
       label: `Reviews (${reviews?.length || 0})`,
       content: (
         <div>
+          {/* Sorting Controls */}
+          {reviews && reviews.length > 0 && (
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-sm text-gray-600">
+                Sort reviews
+              </div>
+              <select
+                value={reviewsSort}
+                onChange={(e) => setReviewsSort(e.target.value as any)}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+              >
+                <option value="newest">Newest</option>
+                <option value="highest">Highest rating</option>
+                <option value="lowest">Lowest rating</option>
+              </select>
+            </div>
+          )}
+
           {reviews && reviews.length > 0 ? (
             <div className="space-y-6">
-              {reviews.map((review) => (
-                <Card key={review.id} className="p-6">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="font-semibold text-gray-900">
-                          {review.user?.full_name || 'Anonymous'}
-                        </span>
-                        {review.is_verified_purchase && (
-                          <Badge variant="success" className="text-xs">
-                            Verified Purchase
-                          </Badge>
-                        )}
+              {([...reviews]
+                .sort((a, b) => {
+                  if (reviewsSort === 'newest') {
+                    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                  }
+                  if (reviewsSort === 'highest') {
+                    return (b.rating || 0) - (a.rating || 0);
+                  }
+                  return (a.rating || 0) - (b.rating || 0);
+                }))
+                .map((review) => (
+                  <Card key={review.id} className="p-6">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="font-semibold text-gray-900">
+                            {review.user?.full_name || 'Anonymous'}
+                          </span>
+                          {review.is_verified_purchase && (
+                            <Badge variant="success" className="text-xs">
+                              Verified Purchase
+                            </Badge>
+                          )}
+                        </div>
+                        <Rating value={review.rating} readonly size="sm" />
                       </div>
-                      <Rating value={review.rating} readonly size="sm" />
+                      <span className="text-sm text-gray-500">
+                        {new Date(review.created_at).toLocaleDateString()}
+                      </span>
                     </div>
-                    <span className="text-sm text-gray-500">
-                      {new Date(review.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                  {review.title && (
-                    <h4 className="font-medium text-gray-900 mb-2">
-                      {review.title}
-                    </h4>
-                  )}
-                  <p className="text-gray-700">{review.comment}</p>
-                </Card>
-              ))}
+                    {review.title && (
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        {review.title}
+                      </h4>
+                    )}
+                    <p className="text-gray-700">{review.comment}</p>
+                  </Card>
+                ))}
             </div>
           ) : (
             <div className="text-center py-8">
@@ -266,9 +349,12 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              {product.name}
-            </h1>
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <h1 className="text-3xl font-bold text-gray-900">
+                {product.name}
+              </h1>
+              <ShareButtons url={`${window.location.origin}/product/${product.slug || product.id}`} title={product.name} compact />
+            </div>
 
             {/* Rating */}
             <div className="flex items-center gap-3 mb-6">
@@ -282,7 +368,7 @@ export default function ProductDetailPage() {
             <div className="mb-6">
               <div className="flex items-baseline gap-3">
                 <span className="text-4xl font-bold text-gray-900">
-                  {formatCurrency(product.price)}
+                  {formatCurrency(effectivePrice)}
                 </span>
                 {product.compare_price && (
                   <span className="text-2xl text-gray-500 line-through">
@@ -292,20 +378,20 @@ export default function ProductDetailPage() {
               </div>
               {discount > 0 && (
                 <p className="text-green-600 font-medium mt-2">
-                  You save {formatCurrency(product.compare_price! - product.price)} ({discount}%)
+                  You save {formatCurrency(product.compare_price! - effectivePrice)} ({discount}%)
                 </p>
               )}
             </div>
 
             {/* Stock Status */}
             <div className="mb-6">
-              {isInStock(product.stock_quantity) ? (
+              {isInStock(availableStock) ? (
                 <>
-                  {isLowStock(product.stock_quantity) ? (
+                  {isLowStock(availableStock) ? (
                     <div className="flex items-center gap-2 text-orange-600">
                       <AlertCircle className="w-5 h-5" />
                       <span className="font-medium">
-                        Only {product.stock_quantity} left in stock!
+                        Only {availableStock} left in stock!
                       </span>
                     </div>
                   ) : (
@@ -328,6 +414,47 @@ export default function ProductDetailPage() {
               <p className="text-gray-700 mb-6">{product.short_description}</p>
             )}
 
+            {/* Variant Selector */}
+            {product.variants && product.variants.length > 0 && (
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Variant
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {product.variants
+                    .filter((v) => v.is_active)
+                    .map((variant) => {
+                      const isSelected = selectedVariantId === variant.id;
+                      const vPrice = typeof variant.price === 'number' && variant.price > 0 ? variant.price : product.price;
+                      const vStock = variant.stock_quantity;
+                      const disabled = vStock < 1;
+                      return (
+                        <button
+                          key={variant.id}
+                          type="button"
+                          onClick={() => !disabled && setSelectedVariantId(variant.id)}
+                          className={`flex items-center justify-between px-3 py-2 border rounded-lg text-left transition-colors ${
+                            disabled
+                              ? 'border-gray-200 text-gray-400 cursor-not-allowed'
+                              : isSelected
+                              ? 'border-primary-600 bg-primary-50'
+                              : 'border-gray-300 hover:border-gray-400'
+                          }`}
+                        >
+                          <span className="font-medium truncate">{variant.variant_name}</span>
+                          <span className="text-sm">
+                            {formatCurrency(vPrice)}
+                          </span>
+                        </button>
+                      );
+                    })}
+                </div>
+                {selectedVariant && selectedVariant.stock_quantity < 5 && selectedVariant.stock_quantity > 0 && (
+                  <p className="text-xs text-orange-600 mt-2">Only {selectedVariant.stock_quantity} left for selected variant</p>
+                )}
+              </div>
+            )}
+
             {/* Quantity Selector */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -348,13 +475,13 @@ export default function ProductDetailPage() {
                   <button
                     onClick={incrementQuantity}
                     className="px-4 py-2 hover:bg-gray-50 transition-colors"
-                    disabled={quantity >= product.stock_quantity}
+                    disabled={quantity >= availableStock}
                   >
                     +
                   </button>
                 </div>
                 <span className="text-sm text-gray-600">
-                  {product.stock_quantity} available
+                  {availableStock} available
                 </span>
               </div>
             </div>
@@ -363,7 +490,7 @@ export default function ProductDetailPage() {
             <div className="flex gap-3 mb-6">
               <Button
                 onClick={handleAddToCart}
-                disabled={!isInStock(product.stock_quantity)}
+                disabled={!isInStock(availableStock)}
                 className="flex-1"
                 size="lg"
               >
@@ -385,7 +512,7 @@ export default function ProductDetailPage() {
 
             <Button
               onClick={handleBuyNow}
-              disabled={!isInStock(product.stock_quantity)}
+              disabled={!isInStock(availableStock)}
               variant="secondary"
               className="w-full"
               size="lg"
@@ -430,6 +557,59 @@ export default function ProductDetailPage() {
         <Card className="p-6">
           <Tabs tabs={productTabs} />
         </Card>
+
+        {/* Related Products */}
+        {related && related.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold mb-6">Related Products</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {related.map((p: any) => (
+                <Card key={p.id} className="group overflow-hidden">
+                  <Link to={`/product/${p.slug}`}>
+                    <div className="relative aspect-square bg-gray-100 overflow-hidden">
+                      {p.images && p.images[0] ? (
+                        <img
+                          src={p.images[0].image_url}
+                          alt={p.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Package className="w-16 h-16 text-gray-300" />
+                        </div>
+                      )}
+                      {p.compare_price && p.compare_price > p.price && (
+                        <Badge className="absolute top-4 right-4 bg-black text-white border-2 border-black">
+                          {Math.round(
+                            ((p.compare_price - p.price) / p.compare_price) * 100
+                          )}
+                          % OFF
+                        </Badge>
+                      )}
+                    </div>
+                  </Link>
+                  <div className="p-6 border-t-2 border-black">
+                    <Link to={`/product/${p.slug}`}>
+                      <h3 className="font-bold text-lg mb-2 line-clamp-2 hover:opacity-70 transition-opacity">
+                        {p.name}
+                      </h3>
+                    </Link>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-xl font-bold">
+                        {formatCurrency(p.price)}
+                      </span>
+                      {p.compare_price && (
+                        <span className="text-sm text-gray-500 line-through">
+                          {formatCurrency(p.compare_price)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

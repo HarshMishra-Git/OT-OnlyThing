@@ -8,6 +8,9 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   isAdmin: boolean;
+  // Internal flag to prevent concurrent auth checks
+  // Not persisted and separate from UI loading state
+  _isChecking?: boolean;
   setUser: (user: Profile | null) => void;
   setLoading: (loading: boolean) => void;
   login: (email: string, password: string) => Promise<{ error: string | null }>;
@@ -24,6 +27,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: true,
       isAdmin: false,
+      _isChecking: false,
 
       setUser: (user) => {
         set({ 
@@ -89,39 +93,42 @@ export const useAuthStore = create<AuthState>()(
       },
 
       checkAuth: async () => {
-        // Prevent multiple simultaneous checks
-        if (get().isLoading) {
-          console.log('Auth check already in progress, skipping...');
+        // Prevent multiple simultaneous checks using an internal flag
+        if (get()._isChecking) {
+          return;
+        }
+
+        // If already authenticated, skip check
+        if (get().isAuthenticated && get().user) {
+          set({ isLoading: false });
           return;
         }
 
         try {
-          set({ isLoading: true });
-          
+          set({ _isChecking: true, isLoading: true });
+
           // Check if Supabase is configured
           const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
           if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
             console.warn('⚠️ Supabase not configured - skipping auth');
-            set({ user: null, isAuthenticated: false, isAdmin: false, isLoading: false });
+            set({ user: null, isAuthenticated: false, isAdmin: false });
             return;
           }
-          
+
           // Quick timeout - 2 seconds max
           const timeoutPromise = new Promise<never>((_, reject) =>
             setTimeout(() => reject(new Error('Auth timeout')), 2000)
           );
-          
+
           const authPromise = AuthService.getCurrentUser();
-          
+
           try {
             const result = await Promise.race([authPromise, timeoutPromise]);
-            
+
             if (result?.user) {
-              console.log('✅ User found:', result.user.email);
-              
               // Try to get profile (optional)
               const { data: profile } = await AuthService.getProfile(result.user.id).catch(() => ({ data: null }));
-              
+
               if (profile) {
                 get().setUser(profile);
               } else {
@@ -135,18 +142,16 @@ export const useAuthStore = create<AuthState>()(
                 get().setUser(basicProfile);
               }
             } else {
-              console.log('ℹ️ No user session');
               get().setUser(null);
             }
           } catch (error: any) {
-            console.log('ℹ️ Auth check skipped:', error.message);
             get().setUser(null);
           }
         } catch (error: any) {
           console.error('❌ Auth error:', error.message);
           get().setUser(null);
         } finally {
-          set({ isLoading: false });
+          set({ isLoading: false, _isChecking: false });
         }
       },
 

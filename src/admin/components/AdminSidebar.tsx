@@ -5,6 +5,8 @@ import {
   Calendar, Truck, FileText, Phone, Mail, Download 
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { OrderService } from '@/services/order.service';
+import { downloadInvoice as downloadInvoiceUtil } from '@/lib/invoice';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
 import { Badge } from '@/components/common/Badge';
@@ -108,23 +110,8 @@ export default function AdminSidebar() {
   const updateOrderStatus = async (status: string) => {
     try {
       setUpdating(true);
-      const updates: any = {
-        status,
-        updated_at: new Date().toISOString(),
-      };
-
-      if (status === 'shipped' && !order?.shipped_at) {
-        updates.shipped_at = new Date().toISOString();
-      } else if (status === 'delivered' && !order?.delivered_at) {
-        updates.delivered_at = new Date().toISOString();
-      }
-
-      const { error } = await supabase
-        .from('orders')
-        .update(updates)
-        .eq('id', id);
-
-      if (error) throw error;
+      const { error } = await OrderService.updateOrderStatus(id as string, status);
+      if (error) throw new Error(error);
       toast.success('Order status updated');
       loadOrder();
     } catch (error) {
@@ -137,15 +124,8 @@ export default function AdminSidebar() {
   const updateTrackingNumber = async () => {
     try {
       setUpdating(true);
-      const { error } = await supabase
-        .from('orders')
-        .update({
-          tracking_number: trackingNumber,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', id);
-
-      if (error) throw error;
+      const { error } = await OrderService.addTrackingNumber(id as string, trackingNumber);
+      if (error) throw new Error(error);
       toast.success('Tracking number updated');
       loadOrder();
     } catch (error) {
@@ -175,50 +155,9 @@ export default function AdminSidebar() {
     }
   };
 
-  const downloadInvoice = () => {
-    // Generate simple text invoice
-    const invoice = `
-INVOICE
---------
-Order Number: ${order?.order_number}
-Date: ${order?.created_at ? format(new Date(order.created_at), 'MMMM dd, yyyy') : ''}
-
-CUSTOMER INFORMATION:
-Name: ${order?.profiles?.full_name || 'N/A'}
-Email: ${order?.profiles?.email || 'N/A'}
-Phone: ${order?.profiles?.phone || 'N/A'}
-
-SHIPPING ADDRESS:
-${order?.shipping_full_name || ''}
-${order?.shipping_address || ''}
-Phone: ${order?.shipping_phone || ''}
-
-ORDER ITEMS:
-${items.map(item => `
-- ${item.product_name} ${item.variant_name ? `(${item.variant_name})` : ''}
-  Quantity: ${item.quantity} x ₹${item.price.toFixed(2)} = ₹${item.subtotal.toFixed(2)}
-`).join('')}
-
-SUMMARY:
-Subtotal: ₹${order?.subtotal.toFixed(2)}
-Tax: ₹${order?.tax.toFixed(2)}
-Shipping: ₹${order?.shipping_cost.toFixed(2)}
-Discount: -₹${order?.discount.toFixed(2)}
---------
-TOTAL: ₹${order?.total.toFixed(2)}
-
-Payment Method: ${order?.payment_method || 'N/A'}
-Payment Status: ${order?.payment_status || 'N/A'}
-
-Thank you for your order!
-    `;
-
-    const blob = new Blob([invoice], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `invoice-${order?.order_number}.txt`;
-    a.click();
+  const handleDownloadInvoice = () => {
+    if (!order) return;
+    downloadInvoiceUtil({ ...order, items });
   };
 
   if (loading) {
@@ -261,7 +200,7 @@ Thank you for your order!
             </p>
           </div>
         </div>
-        <Button variant="secondary" onClick={downloadInvoice}>
+        <Button variant="secondary" onClick={handleDownloadInvoice}>
           <Download className="w-4 h-4 mr-2" />
           Download Invoice
         </Button>

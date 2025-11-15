@@ -1,16 +1,18 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Product } from '@/types';
+import { calcShipping, calcTax } from '@/lib/totals';
 
 export interface CartItem {
   product: Product;
   quantity: number;
+  unitPrice: number; // effective price, respects variant override when applicable
   variantId?: string;
 }
 
 interface CartState {
   items: CartItem[];
-  addItem: (product: Product, quantity?: number, variantId?: string) => void;
+  addItem: (product: Product, quantity?: number, variantId?: string, unitPriceOverride?: number) => void;
   removeItem: (productId: string, variantId?: string) => void;
   updateQuantity: (productId: string, quantity: number, variantId?: string) => void;
   clearCart: () => void;
@@ -26,7 +28,7 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
 
-      addItem: (product, quantity = 1, variantId) => {
+      addItem: (product, quantity = 1, variantId, unitPriceOverride) => {
         set((state) => {
           const existingItem = state.items.find(
             (item) => item.product.id === product.id && item.variantId === variantId
@@ -43,7 +45,10 @@ export const useCartStore = create<CartState>()(
           }
 
           return {
-            items: [...state.items, { product, quantity, variantId }],
+            items: [
+              ...state.items,
+              { product, quantity, variantId, unitPrice: unitPriceOverride ?? product.price },
+            ],
           };
         });
       },
@@ -75,20 +80,17 @@ export const useCartStore = create<CartState>()(
       },
 
       getSubtotal: () => {
-        return get().items.reduce(
-          (total, item) => total + item.product.price * item.quantity,
-          0
-        );
+        return get().items.reduce((total, item) => total + item.unitPrice * item.quantity, 0);
       },
 
       getTax: () => {
         const subtotal = get().getSubtotal();
-        return subtotal * 0.18; // 18% tax
+        return calcTax(subtotal);
       },
 
       getShipping: () => {
         const subtotal = get().getSubtotal();
-        return subtotal >= 500 ? 0 : 50;
+        return calcShipping(subtotal);
       },
 
       getTotal: () => {

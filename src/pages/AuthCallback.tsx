@@ -26,9 +26,11 @@ export function AuthCallback() {
         // Redirect based on user role
         const redirectTo = localStorage.getItem('auth_redirect') || '/';
         localStorage.removeItem('auth_redirect');
-        navigate(redirectTo);
+        // Clean URL hash
+        window.history.replaceState({}, '', redirectTo);
+        navigate(redirectTo, { replace: true });
       } else {
-        navigate('/login');
+        navigate('/login', { replace: true });
       }
     } catch (error) {
       console.error('Callback processing error:', error);

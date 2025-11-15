@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +10,7 @@ import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { Spinner } from '@/components/common/Spinner';
 import toast from 'react-hot-toast';
+import { generateSEOTags, updateMetaTags } from '@/lib/seo';
 
 const signupSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters'),
@@ -27,6 +28,18 @@ export function SignupPage() {
   const navigate = useNavigate();
   const { signUp } = useAuthStore();
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const tags = generateSEOTags({
+      title: `Sign Up | ${import.meta.env.VITE_APP_NAME || 'OnlyThing'}`,
+      description: 'Create your account and start shopping smarter today.',
+      keywords: 'signup, create account, register, onlything',
+      image: `${window.location.origin}/L.jpg`,
+      url: window.location.href,
+      type: 'website',
+    });
+    updateMetaTags(tags);
+  }, []);
 
   const {
     register,

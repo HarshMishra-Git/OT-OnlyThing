@@ -84,7 +84,8 @@ export function ProductForm() {
 
   const loadCategories = async () => {
     try {
-      const data = await CategoryService.getCategories();
+      const { data, error } = await CategoryService.getAllCategories();
+      if (error) throw new Error(error);
       setCategories(data);
     } catch (error) {
       toast.error('Failed to load categories');
@@ -159,25 +160,45 @@ export function ProductForm() {
 
       let productId = id;
 
+      // Clean data - convert empty strings to null for UUID fields
+      const cleanData = {
+        ...data,
+        category_id: data.category_id || null,
+      };
+
       // Create or update product
       if (isEdit) {
-        await ProductService.updateProduct(id!, data);
+        const { error } = await ProductService.updateProduct(id!, cleanData);
+        if (error) throw new Error(error);
         toast.success('Product updated successfully');
       } else {
-        const newProduct = await ProductService.createProduct(data);
+        const { data: newProduct, error } = await ProductService.createProduct(cleanData);
+        if (error || !newProduct) throw new Error(error || 'Failed to create product');
         productId = newProduct.id;
         toast.success('Product created successfully');
       }
 
       // Upload images
-      if (images.length > 0) {
+      if (images.length > 0 && productId) {
         setUploadingImages(true);
-        await ProductService.uploadProductImages(productId!, images);
+        for (let i = 0; i < images.length; i++) {
+          const file = images[i];
+          const base64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          });
+          await ProductService.addProductImage(productId, base64, file.name, i === 0);
+        }
       }
 
       // Update specifications
-      if (specifications.length > 0) {
-        await ProductService.updateProductSpecifications(productId!, specifications);
+      if (specifications.length > 0 && productId) {
+        for (const spec of specifications) {
+          if (spec.key && spec.value) {
+            await ProductService.addProductSpecification(productId, spec.key, spec.value);
+          }
+        }
       }
 
       navigate('/admin/products');

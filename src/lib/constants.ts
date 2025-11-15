@@ -24,10 +24,10 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
 };
 
 export const STORAGE_BUCKETS = {
-  products: 'products',
-  categories: 'categories',
-  blog: 'blog',
-  users: 'users',
+  PRODUCTS: 'products',
+  CATEGORIES: 'categories',
+  BLOG: 'blog',
+  AVATARS: 'avatars',
 };
 
 export const SKIN_TYPES = [

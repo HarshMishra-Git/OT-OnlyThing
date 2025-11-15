@@ -20,13 +20,22 @@ export const queryKeys = {
     list: (filters: any) => [...queryKeys.products.lists(), filters] as const,
     details: () => [...queryKeys.products.all, 'detail'] as const,
     detail: (slug: string) => [...queryKeys.products.details(), slug] as const,
-    featured: ['products', 'featured'] as const,
+    featured: (limit?: number) => ['products', 'featured', limit ?? 'default'] as const,
+    search: (query: string) => ['products', 'search', query] as const,
+    related: (categoryId: string, excludeProductId?: string, limit?: number) => [
+      'products',
+      'related',
+      categoryId,
+      excludeProductId ?? 'none',
+      limit ?? 'default',
+    ] as const,
   },
   
   // Categories
   categories: {
     all: ['categories'] as const,
     active: ['categories', 'active'] as const,
+    counts: ['categories', 'counts'] as const,
   },
   
   // Cart

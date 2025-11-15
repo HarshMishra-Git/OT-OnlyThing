@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '../components/Button';
 import { Mail, Phone, Clock, MapPin, Send, CheckCircle, Instagram, Twitter, Facebook } from 'lucide-react';
+import { generateSEOTags, updateMetaTags } from '@/lib/seo';
 
 export function ContactPage() {
   const [formData, setFormData] = useState({
@@ -15,6 +16,18 @@ export function ContactPage() {
     e.preventDefault();
     setSubmitted(true);
   };
+
+  useEffect(() => {
+    const tags = generateSEOTags({
+      title: 'Contact Us | OnlyThing',
+      description: "We're here to help with any questions about our products.",
+      keywords: ['contact', 'support', 'customer service', 'OnlyThing'],
+      image: '/og-default.jpg',
+      url: window.location.href,
+      type: 'website',
+    });
+    updateMetaTags(tags);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white pt-20">

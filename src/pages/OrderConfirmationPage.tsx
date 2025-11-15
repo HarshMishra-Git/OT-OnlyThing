@@ -1,10 +1,33 @@
 import { Button } from '../components/Button';
+import { OrderService } from '@/services/order.service';
+import { downloadInvoice } from '@/lib/invoice';
 import { CheckCircle, Package, Truck, Home, Mail } from 'lucide-react';
+import { useEffect } from 'react';
+import { generateSEOTags, updateMetaTags } from '@/lib/seo';
 
 export function OrderConfirmationPage() {
   // Get order number from URL query params
   const urlParams = new URLSearchParams(window.location.search);
   const orderNumber = urlParams.get('order');
+
+  useEffect(() => {
+    const tags = generateSEOTags({
+      title: 'Order Confirmed | OnlyThing',
+      description: 'Your order is confirmed. Track delivery and download invoice.',
+      keywords: ['order', 'confirmation', 'invoice', 'OnlyThing'],
+      image: '/og-default.jpg',
+      url: window.location.href,
+      type: 'website',
+    });
+    updateMetaTags(tags);
+  }, []);
+
+  const handleDownloadInvoice = async () => {
+    if (!orderNumber) return;
+    const { data, error } = await OrderService.getOrderByNumber(orderNumber);
+    if (error || !data) return;
+    downloadInvoice(data);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-white pt-20">
@@ -96,6 +119,11 @@ export function OrderConfirmationPage() {
           <Button onClick={() => (window.location.href = '/account/orders')} variant="secondary">
             View Order Details
           </Button>
+          {orderNumber && (
+            <Button onClick={handleDownloadInvoice} variant="outline">
+              Download Invoice
+            </Button>
+          )}
           <Button onClick={() => (window.location.href = '/shop')}>Continue Shopping</Button>
         </div>
       </div>

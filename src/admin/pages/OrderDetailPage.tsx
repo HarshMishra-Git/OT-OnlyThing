@@ -28,7 +28,21 @@ export const OrderDetailPage = () => {
       return data;
     },
     enabled: !!id,
+    retry: false,
   });
+
+  if (!id) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Invalid order ID</p>
+          <Button onClick={() => navigate('/admin/orders')} className="mt-4">
+            Back to Orders
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const updateStatusMutation = useMutation({
     mutationFn: async (status: string) => {

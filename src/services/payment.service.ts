@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { safeLog, safeError } from '@/lib/logger';
 
 declare global {
   interface Window {
@@ -48,7 +49,7 @@ export interface PaymentVerification {
 }
 
 export class PaymentService {
-  private static isTestMode = import.meta.env.DEV;
+  private static isTestMode = (import.meta.env.VITE_RAZORPAY_TEST_MODE === 'true') || import.meta.env.DEV;
 
   /**
    * Load Razorpay script
@@ -88,7 +89,7 @@ export class PaymentService {
       if (error) throw error;
       return { data, error: null };
     } catch (error: any) {
-      console.error('Create order error:', error);
+      safeError('Create order error:', error);
       
       // Test mode fallback
       if (this.isTestMode) {
@@ -118,9 +119,13 @@ export class PaymentService {
       throw new Error('Failed to load Razorpay SDK');
     }
 
+    const keyId = (import.meta.env.VITE_RAZORPAY_TEST_MODE === 'true')
+      ? (import.meta.env.VITE_RAZORPAY_KEY_ID_TEST || import.meta.env.VITE_RAZORPAY_KEY_ID)
+      : import.meta.env.VITE_RAZORPAY_KEY_ID;
+
     const razorpay = new window.Razorpay({
       ...options,
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      key: keyId,
     });
 
     razorpay.open();
@@ -139,11 +144,11 @@ export class PaymentService {
       if (error) throw error;
       return { success: true, error: null };
     } catch (error: any) {
-      console.error('Payment verification error:', error);
+      safeError('Payment verification error:', error);
       
       // Test mode - always succeed
       if (this.isTestMode) {
-        console.log('Test mode: Payment verification bypassed');
+        safeLog('Test mode: Payment verification bypassed');
         return { success: true, error: null };
       }
       
@@ -193,7 +198,7 @@ export class PaymentService {
       if (error) throw error;
       return { data, error: null };
     } catch (error: any) {
-      console.error('Complete payment error:', error);
+      safeError('Complete payment error:', error);
       return { data: null, error: error.message };
     }
   }
@@ -203,10 +208,10 @@ export class PaymentService {
    */
   static async testPayment(amount: number) {
     try {
-      console.log('🧪 Testing payment flow...');
+      safeLog('🧪 Testing payment flow...');
       
       // Step 1: Create order
-      console.log('1️⃣ Creating order...');
+      safeLog('1️⃣ Creating order...');
       const { data: orderData, error: orderError } = await this.createOrder({
         amount,
         currency: 'INR',
@@ -214,13 +219,14 @@ export class PaymentService {
       });
 
       if (orderError) throw new Error(orderError);
-      console.log('✅ Order created:', orderData);
+      // Avoid logging full order data to prevent accidental PII exposure
+      safeLog('✅ Order created');
 
       // Step 2: Load Razorpay
-      console.log('2️⃣ Loading Razorpay...');
+      safeLog('2️⃣ Loading Razorpay...');
       const loaded = await this.loadRazorpayScript();
       if (!loaded) throw new Error('Failed to load Razorpay');
-      console.log('✅ Razorpay loaded');
+      safeLog('✅ Razorpay loaded');
 
       // Step 3: Test data
       const testResponse: RazorpayResponse = {
@@ -230,7 +236,7 @@ export class PaymentService {
       };
 
       // Step 4: Verify payment
-      console.log('3️⃣ Verifying payment...');
+      safeLog('3️⃣ Verifying payment...');
       const verification = await this.verifyPayment({
         orderId: testResponse.razorpay_order_id,
         paymentId: testResponse.razorpay_payment_id,
@@ -238,12 +244,12 @@ export class PaymentService {
       });
 
       if (!verification.success) throw new Error('Verification failed');
-      console.log('✅ Payment verified');
+      safeLog('✅ Payment verified');
 
-      console.log('🎉 Payment test successful!');
+      safeLog('🎉 Payment test successful!');
       return { success: true, error: null };
     } catch (error: any) {
-      console.error('❌ Payment test failed:', error);
+      safeError('❌ Payment test failed:', error);
       return { success: false, error: error.message };
     }
   }

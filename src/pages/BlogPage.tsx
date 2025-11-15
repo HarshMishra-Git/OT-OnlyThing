@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { ShareButtons } from '@/components/common/ShareButtons';
 import { supabase } from '../lib/supabase';
 import { BookOpen, Calendar, User, ArrowRight } from 'lucide-react';
+import { generateSEOTags, updateMetaTags } from '@/lib/seo';
 
 interface BlogPost {
   id: string;
@@ -9,7 +11,7 @@ interface BlogPost {
   excerpt: string;
   featured_image: string;
   published_at: string;
-  author: string;
+  author?: { full_name: string };
 }
 
 export function BlogPage() {
@@ -17,12 +19,22 @@ export function BlogPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const tags = generateSEOTags({
+      title: `Blog | ${import.meta.env.VITE_APP_NAME || 'OnlyThing'}`,
+      description: 'Insights, research, and expert advice on skincare science and wellness.',
+      keywords: 'blog, skincare, science, wellness, routines',
+      image: `${window.location.origin}/1.jpg`,
+      url: window.location.href,
+      type: 'article',
+    });
+    updateMetaTags(tags);
+
     async function fetchPosts() {
       try {
         const { data, error } = await supabase
           .from('blog_posts')
-          .select('id, title, slug, excerpt, featured_image, published_at, author')
-          .eq('is_published', true)
+          .select('id, title, slug, excerpt, featured_image, published_at, author_id, author:profiles(full_name)')
+          .eq('status', 'published')
           .order('published_at', { ascending: false });
 
         if (error) throw error;
@@ -68,50 +80,57 @@ export function BlogPage() {
         ) : posts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {posts.map((post, index) => (
-              <a
+              <div
                 key={post.id}
-                href={`/blog/${post.slug}`}
-                className="group bg-white border-2 border-gray-200 rounded-xl hover:border-black hover:shadow-2xl transition-all duration-300 overflow-hidden"
+                className="bg-white border-2 border-gray-200 rounded-xl hover:border-black hover:shadow-2xl transition-all duration-300 overflow-hidden"
                 style={{ animationDelay: `${index * 100}ms`, animation: 'fadeIn 0.5s ease-out' }}
               >
-                {post.featured_image && (
-                  <div className="aspect-video bg-gray-100 overflow-hidden">
-                    <img
-                      src={post.featured_image}
-                      alt={post.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                  </div>
-                )}
-                <div className="p-6 space-y-3">
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <Calendar size={14} />
-                      {new Date(post.published_at).toLocaleDateString('en-IN', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
+                <a
+                  href={`/blog/${post.slug}`}
+                  className="group block"
+                >
+                  {post.featured_image && (
+                    <div className="aspect-video bg-gray-100 overflow-hidden">
+                      <img
+                        src={post.featured_image}
+                        alt={post.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
                     </div>
-                    {post.author && (
-                      <div className="flex items-center gap-1">
-                        <User size={14} />
-                        {post.author}
-                      </div>
-                    )}
-                  </div>
-                  <h2 className="text-xl font-black group-hover:text-gray-700 transition-colors line-clamp-2">
-                    {post.title}
-                  </h2>
-                  {post.excerpt && (
-                    <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">{post.excerpt}</p>
                   )}
-                  <div className="flex items-center gap-2 text-sm font-bold text-black group-hover:gap-4 transition-all pt-2">
-                    Read More
-                    <ArrowRight size={16} />
+                  <div className="p-6 space-y-3">
+                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <Calendar size={14} />
+                        {new Date(post.published_at).toLocaleDateString('en-IN', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </div>
+                      {post.author?.full_name && (
+                        <div className="flex items-center gap-1">
+                          <User size={14} />
+                          {post.author.full_name}
+                        </div>
+                      )}
+                    </div>
+                    <h2 className="text-xl font-black group-hover:text-gray-700 transition-colors line-clamp-2">
+                      {post.title}
+                    </h2>
+                    {post.excerpt && (
+                      <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">{post.excerpt}</p>
+                    )}
+                    <div className="flex items-center gap-2 text-sm font-bold text-black group-hover:gap-4 transition-all pt-2">
+                      Read More
+                      <ArrowRight size={16} />
+                    </div>
                   </div>
+                </a>
+                <div className="px-6 pb-6">
+                  <ShareButtons url={`${window.location.origin}/blog/${post.slug}`} title={post.title} compact />
                 </div>
-              </a>
+              </div>
             ))}
           </div>
         ) : (
